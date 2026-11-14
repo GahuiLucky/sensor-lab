@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sensor Lab">
+<meta name="theme-color" content="#05060c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Sensor Lab</title>
+<style>
+:root{--cyan:#4dd9ff;--violet:#9b7bff;--pink:#ff6fb5;--green:#59f29e;--amber:#ffc55a;--red:#ff6161}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#05060c;color:#fff;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(60% 40% at 85% 0%,rgba(155,123,255,.25),transparent 70%),radial-gradient(55% 40% at 5% 100%,rgba(77,217,255,.16),transparent 70%)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 14px) 16px 24px}
+.view{display:none;flex-direction:column;gap:14px}.view.on{display:flex}
+nav{display:flex;gap:2px;margin:0 10px calc(env(safe-area-inset-bottom) + 6px);padding:6px;border-radius:24px;
+  background:rgba(30,32,48,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1)}
+nav button{flex:1;background:none;border:0;border-radius:16px;color:rgba(255,255,255,.4);padding:7px 0 6px;font:600 9px system-ui;display:flex;flex-direction:column;gap:3px;align-items:center}
+nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--cyan);background:rgba(77,217,255,.13)}
+h1{font-size:24px;font-weight:800;margin:0}
+.sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.head{display:flex;align-items:center;gap:8px}.head .t{flex:1}
+.pill{display:flex;align-items:center;gap:6px;font:700 9px system-ui;letter-spacing:.12em;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.08)}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.pill.off i{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.ib{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:14px}
+.card{border-radius:26px;padding:18px;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:12px}
+.card>.ct{font:700 10px system-ui;letter-spacing:.16em;color:rgba(255,255,255,.5);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{border-radius:20px;padding:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
+.tile .l{font:600 10px system-ui;color:rgba(255,255,255,.55);margin-bottom:10px}
+.tile .v{font:600 23px ui-rounded,system-ui;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:10px;color:rgba(255,255,255,.4);font-weight:500;margin-left:3px}
+.row{display:flex;justify-content:space-between;font-size:13px;gap:10px}
+.row span:first-child{color:rgba(255,255,255,.55);font-size:12px}
+.row span:last-child{font-weight:600;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:12px}.legend div{flex:1;font:600 14px ui-rounded,system-ui;font-variant-numeric:tabular-nums}
+.legend b{display:block;font-size:9px;color:rgba(255,255,255,.45);margin-bottom:3px}
+canvas{width:100%;display:block}
+.warn{padding:12px;border-radius:14px;background:rgba(255,197,90,.1);font-size:12px;color:rgba(255,255,255,.7)}
+.note{font-size:10px;color:rgba(255,255,255,.32);line-height:1.4}
+.btn{border:0;border-radius:99px;padding:15px;font:700 15px system-ui;color:#04101a;background:linear-gradient(90deg,var(--cyan),var(--green))}
+.btn.g{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.1);font-size:13px;padding:13px}
+.seg{display:flex;background:rgba(255,255,255,.07);border-radius:10px;padding:2px}
+.seg button{flex:1;border:0;background:none;color:rgba(255,255,255,.6);font:600 12px system-ui;padding:8px 0;border-radius:8px}
+.seg button.on{background:rgba(255,255,255,.18);color:#fff}
+.bar{height:10px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}.bar i{display:block;height:100%;min-width:6px;border-radius:99px}
+#welcome{position:fixed;inset:0;z-index:20;background:#05060c;display:none;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 40px) 26px 34px}
+#welcome.on{display:block}
+#welcome .in{display:flex;flex-direction:column;gap:22px;text-align:center;max-width:460px;margin:0 auto}
+#welcome h1{font-size:34px}
+.logo{width:106px;height:106px;border-radius:50%;margin:0 auto;display:grid;place-items:center;border:1.5px solid rgba(77,217,255,.6);background:linear-gradient(135deg,rgba(77,217,255,.3),rgba(155,123,255,.22))}
+.logo svg{width:44px;height:44px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);display:none;align-items:flex-end}
+.sheet.on{display:flex}
+.sheet .box{width:100%;max-height:92%;overflow-y:auto;background:#10121e;border-radius:26px 26px 0 0;padding:20px 16px calc(env(safe-area-inset-bottom) + 20px);display:flex;flex-direction:column;gap:12px}
+label{font:700 9px system-ui;letter-spacing:.12em;color:rgba(255,255,255,.4);text-transform:uppercase;display:flex;flex-direction:column;gap:5px}
+input,select{background:rgba(255,255,255,.08);border:0;border-radius:10px;color:#fff;font:600 15px system-ui;padding:11px;width:100%;-webkit-user-select:text;user-select:text}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toolc{position:relative}
+.toolc .v{font:700 22px ui-rounded,system-ui;font-variant-numeric:tabular-nums}
+.toolc .n{font:600 12px system-ui;margin-top:8px}.toolc .s{font-size:9px;color:rgba(255,255,255,.35)}
+.toolc.alarm{border-color:var(--red)!important;background:rgba(255,97,97,.14)}
+.chk{display:flex;align-items:center;justify-content:space-between;font:600 13px system-ui;text-transform:none;letter-spacing:0;color:#fff;flex-direction:row}
+.chk input{width:auto}
+</style>
+</head>
+<body>
+<div id="app">
+<main id="main">
+  <!-- Übersicht -->
+  <section class="view on" id="v-dash">
+    <div class="head"><div class="t"><h1>Sensor Lab</h1><div class="sub" id="sub">Alle Sensoren live</div></div>
+      <div class="pill" id="pill"><i></i><span id="pilltxt">LIVE</span></div>
+      <button class="ib" id="pausebtn" aria-label="Pause">❚❚</button></div>
+    <div class="warn" id="warn" style="display:none"></div>
+    <div class="card"><div class="ct">Lage &amp; Neigung</div>
+      <div style="display:flex;gap:16px;align-items:center">
+        <canvas id="horizon" style="width:118px;height:118px"></canvas>
+        <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+          <div class="row"><span>Roll</span><span id="d-roll" style="color:var(--cyan)"></span></div>
+          <div class="row"><span>Nick</span><span id="d-pitch" style="color:var(--violet)"></span></div>
+          <div class="row"><span>Gier</span><span id="d-yaw" style="color:var(--pink)"></span></div>
+          <div class="row"><span>Schwerkraft</span><span id="d-grav" style="color:var(--green)"></span></div>
+        </div></div></div>
+    <div class="card"><div class="ct">Beschleunigung</div>
+      <div class="legend"><div style="color:var(--green)"><b>X</b><span id="d-ax"></span></div><div style="color:var(--cyan)"><b>Y</b><span id="d-ay"></span></div><div style="color:var(--pink)"><b>Z</b><span id="d-az"></span></div></div>
+      <canvas id="c-dash-acc" style="height:140px"></canvas></div>
+    <div class="grid" id="dash-tiles"></div>
+  </section>
+
+  <!-- Bewegung -->
+  <section class="view" id="v-motion">
+    <div class="head"><div class="t"><h1>Bewegung</h1><div class="sub">Beschleunigung · Rotation · Lage</div></div></div>
+    <div class="seg" id="motion-seg"><button data-m="acc" class="on">Accel</button><button data-m="gyro">Gyro</button><button data-m="att">Lage</button></div>
+    <div id="m-acc" class="m-pane" style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><div class="ct">Beschleunigung (g)</div>
+        <div class="legend"><div style="color:var(--green)"><b>X</b><span id="m-ax"></span></div><div style="color:var(--cyan)"><b>Y</b><span id="m-ay"></span></div><div style="color:var(--pink)"><b>Z</b><span id="m-az"></span></div></div>
+        <canvas id="c-acc" style="height:190px"></canvas></div>
+      <div class="grid"><div class="tile"><div class="l">Betrag</div><div class="v" id="m-amag"></div></div><div class="tile"><div class="l">Spitzenwert</div><div class="v" id="m-apeak"></div></div></div>
+    </div>
+    <div id="m-gyro" class="m-pane" style="display:none;flex-direction:column;gap:14px">
+      <div class="card"><div class="ct">Rotationsrate (°/s)</div>
+        <div class="legend"><div style="color:var(--green)"><b>X</b><span id="m-gx"></span></div><div style="color:var(--cyan)"><b>Y</b><span id="m-gy"></span></div><div style="color:var(--pink)"><b>Z</b><span id="m-gz"></span></div></div>
+        <canvas id="c-gyro" style="height:190px"></canvas></div>
+      <div class="grid"><div class="tile"><div class="l">Betrag</div><div class="v" id="m-gmag"></div></div><div class="tile"><div class="l">Spitzenwert</div><div class="v" id="m-gpeak"></div></div></div>
+    </div>
+    <div id="m-att" class="m-pane" style="display:none;flex-direction:column;gap:14px">
+      <div class="card"><div class="ct">Künstlicher Horizont</div><canvas id="horizon2" style="height:230px"></canvas></div>
+      <div class="grid">
+        <div class="tile"><div class="l">Roll</div><div class="v" id="a-roll"></div></div>
+        <div class="tile"><div class="l">Nick</div><div class="v" id="a-pitch"></div></div>
+        <div class="tile"><div class="l">Gier</div><div class="v" id="a-yaw"></div></div>
+        <div class="tile"><div class="l">Schwerkraft</div><div class="v" id="a-grav"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Standort -->
+  <section class="view" id="v-loc">
+    <div class="head"><div class="t"><h1>Standort</h1><div class="sub">GPS · Kompass · Höhe</div></div></div>
+    <div class="warn" id="loc-warn" style="display:none"></div>
+    <div class="card"><div class="ct">Kompass</div><canvas id="compass" style="height:250px"></canvas>
+      <div class="row"><span>Richtung</span><span id="l-head"></span></div>
+      <div class="row"><span>Genauigkeit</span><span id="l-hacc"></span></div></div>
+    <div class="card"><div class="ct">Position</div>
+      <div class="row"><span>Breitengrad</span><span id="l-lat"></span></div>
+      <div class="row"><span>Längengrad</span><span id="l-lon"></span></div>
+      <div class="row"><span>GPS-Genauigkeit</span><span id="l-acc"></span></div>
+      <div class="row"><span>Letztes Update</span><span id="l-time"></span></div></div>
+    <div class="grid">
+      <div class="tile"><div class="l">Tempo</div><div class="v" id="l-speed"></div></div>
+      <div class="tile"><div class="l">Kurs</div><div class="v" id="l-course"></div></div>
+      <div class="tile"><div class="l">Höhe</div><div class="v" id="l-alt"></div></div>
+      <div class="tile"><div class="l">Höhen-Genauigkeit</div><div class="v" id="l-aacc"></div></div>
+    </div>
+  </section>
+
+  <!-- Umgebung -->
+  <section class="view" id="v-env">
+    <div class="head"><div class="t"><h1>Umgebung</h1><div class="sub">Mikrofon · Gerät</div></div></div>
+    <div class="card"><div class="ct">Schallpegel</div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span id="e-db" style="font:700 42px ui-rounded,system-ui;font-variant-numeric:tabular-nums"></span><span style="font-size:11px;color:rgba(255,255,255,.4)">dBFS</span><span style="margin-left:auto;font:700 9px system-ui;letter-spacing:.1em;color:var(--pink);background:rgba(255,111,181,.14);padding:5px 10px;border-radius:99px" id="e-label"></span></div>
+      <div class="bar"><i id="e-bar" style="background:linear-gradient(90deg,rgba(255,111,181,.7),var(--pink));width:0"></i></div>
+      <canvas id="c-sound" style="height:90px"></canvas>
+      <div class="warn" id="mic-warn" style="display:none"></div>
+      <button class="btn g" id="mic-btn" style="display:none">Mikrofon aktivieren</button>
+      <div class="note">dBFS ist ein relativer Pegel: 0 dB entspricht Vollaussteuerung. Es wird nichts aufgenommen.</div></div>
+    <div class="card"><div class="ct">Gerät</div>
+      <div class="row"><span>Akku</span><span id="e-bat"></span></div>
+      <div class="row"><span>Bildschirm</span><span id="e-screen"></span></div>
+      <div class="row"><span>Sprache</span><span id="e-lang"></span></div>
+      <div class="row"><span>Online</span><span id="e-online"></span></div>
+      <div class="row"><span>Sensorrate (Bewegung)</span><span id="e-rate"></span></div>
+      <div class="note">Safari gibt keinen Zugriff auf Barometer, Schrittzähler oder Akkustand. Dafür wäre die native iOS-App nötig.</div></div>
+    <div class="card"><div class="ct">Einstellungen</div>
+      <label class="chk"><span>Demo-Modus (simulierte Werte)</span><input type="checkbox" id="demo-toggle"></label>
+      <button class="btn g" id="reset-btn">Berechtigungen neu anfragen</button></div>
+  </section>
+
+  <!-- Studio -->
+  <section class="view" id="v-studio">
+    <div class="head"><div class="t"><h1>Studio</h1><div class="sub">Baukasten für Sensortools</div></div>
+      <button class="ib" id="add-tool" style="background:rgba(77,217,255,.2);border-color:rgba(77,217,255,.45)" aria-label="Neues Tool">＋</button></div>
+    <div class="grid" id="tool-grid"></div>
+    <div class="note">Tipp: Karte antippen zum Bearbeiten. Alarm-Tools färben sich rot (und vibrieren, wenn das Gerät es erlaubt). Alles wird lokal gespeichert.</div>
+    <button class="btn g" id="presets-btn">Vorlagen wiederherstellen</button>
+  </section>
+</main>
+
+<nav id="nav">
+  <button data-v="dash" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Übersicht</button>
+  <button data-v="studio"><svg viewBox="0 0 24 24"><path d="M14.5 4l5.5 5.5-3 3L11.5 7zM11.5 7L4 14.5 9.5 20l7.5-7.5"/></svg>Studio</button>
+  <button data-v="motion"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/></svg>Bewegung</button>
+  <button data-v="loc"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Standort</button>
+  <button data-v="env"><svg viewBox="0 0 24 24"><path d="M4 14a8 8 0 0116 0M12 14l4-5"/><circle cx="12" cy="14" r="1.2"/></svg>Umgebung</button>
+</nav>
+</div>
+
+<div id="welcome"><div class="in">
+  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 12v.01M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.5 5.5a9 9 0 000 13M18.5 5.5a9 9 0 010 13"/></svg></div>
+  <div><h1>Sensor Lab</h1><div class="sub" style="font-size:13px;margin-top:8px;color:rgba(255,255,255,.55)">Alle Sensoren deines iPhones – live, direkt im Browser.</div></div>
+  <div class="card" style="text-align:left">
+    <div class="row"><span style="color:#fff;font-weight:600;font-size:13px">Bewegung &amp; Lage</span><span style="font-size:10px;color:rgba(255,255,255,.4)">Accel · Gyro</span></div>
+    <div class="row"><span style="color:#fff;font-weight:600;font-size:13px">Standort &amp; Kompass</span><span style="font-size:10px;color:rgba(255,255,255,.4)">GPS · Richtung</span></div>
+    <div class="row"><span style="color:#fff;font-weight:600;font-size:13px">Umgebung</span><span style="font-size:10px;color:rgba(255,255,255,.4)">Schallpegel</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <button class="btn" id="start-real">Sensoren aktivieren</button>
+    <button class="btn g" id="start-demo">Ohne Sensoren testen (Demo)</button>
+  </div>
+  <div class="note">Safari fragt nach Bewegung, Standort und Mikrofon. Alle Messwerte bleiben auf deinem Gerät.</div>
+</div></div>
+
+<div class="sheet" id="sheet"><div class="box" id="sheet-box"></div></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const C = {cyan:"#4dd9ff",violet:"#9b7bff",pink:"#ff6fb5",green:"#59f29e",amber:"#ffc55a",red:"#ff6161"};
+const PALETTE = [C.cyan,C.green,C.pink,C.violet,C.amber,C.red];
+const N = 180;
+
+/* ---------- Zustand ---------- */
+const S = {
+  paused:false, demo:false, started:false, motionOK:false, gotMotion:false, rate:0,
+  acc:{x:0,y:0,z:0}, grav:{x:0,y:0,z:-1}, rot:{x:0,y:0,z:0},
+  roll:0, pitch:0, yaw:0, heading:0, headingAcc:null, hasHeading:false,
+  loc:null, sound:{db:-80,level:0}, micOK:false, locDenied:false,
+  tr:{acc:[[],[],[]], gyro:[[],[],[]], sound:[]}, peakA:0, peakG:0
+};
+const push = (a,v,n=N)=>{a.push(v); if(a.length>n)a.shift();};
+const fix = (v,d=1)=>Number.isFinite(v)?v.toFixed(d):"–";
+const mag = v=>Math.hypot(v.x,v.y,v.z);
+
+/* ---------- Eingaben ---------- */
+function onMotion(e){
+  if(S.demo||S.paused) return;
+  S.gotMotion = true;
+  const a = e.acceleration, g = e.accelerationIncludingGravity, r = e.rotationRate;
+  const G = 9.80665;
+  if(g){ S.grav = {x:(g.x||0)/G, y:(g.y||0)/G, z:(g.z||0)/G}; }
+  if(a && a.x!=null){ S.acc = {x:a.x/G, y:a.y/G, z:a.z/G}; }
+  else if(g){ const m=mag(S.grav); S.acc={x:S.grav.x*0, y:0, z:0}; S.acc.z=m-1; }
+  if(r){ S.rot = {x:r.beta||0, y:r.gamma||0, z:r.alpha||0}; }  // °/s
+  if(e.interval) S.rate = Math.round(1000/e.interval);
+  addSamples();
+}
+function onOrient(e){
+  if(S.demo||S.paused) return;
+  if(e.beta!=null){ S.pitch=e.beta; S.roll=e.gamma; }
+  if(e.alpha!=null && e.webkitCompassHeading==null){ S.yaw=e.alpha; }
+  if(e.webkitCompassHeading!=null){
+    S.heading = e.webkitCompassHeading; S.yaw = S.heading;
+    S.headingAcc = e.webkitCompassAccuracy>=0 ? e.webkitCompassAccuracy : null; S.hasHeading=true;
+  } else if(e.absolute && e.alpha!=null){
+    S.heading = (360-e.alpha)%360; S.hasHeading=true;
+  }
+}
+function addSamples(){
+  push(S.tr.acc[0],S.acc.x); push(S.tr.acc[1],S.acc.y); push(S.tr.acc[2],S.acc.z);
+  push(S.tr.gyro[0],S.rot.x); push(S.tr.gyro[1],S.rot.y); push(S.tr.gyro[2],S.rot.z);
+  S.peakA=Math.max(S.peakA,mag(S.acc)); S.peakG=Math.max(S.peakG,mag(S.rot));
+}
+let motionTimer=null;
+setInterval(()=>{ // Diagramm auch ohne Sensorevent füttern
+  if(S.paused||S.demo||!S.started) return;
+},1000);
+
+async function reqMotion(){
+  try{
+    if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){
+      const r = await DeviceMotionEvent.requestPermission();
+      if(r!=="granted") return false;
+      if(typeof DeviceOrientationEvent.requestPermission==="function"){
+        await DeviceOrientationEvent.requestPermission();
+      }
+    }
+    window.addEventListener("devicemotion",onMotion);
+    window.addEventListener("deviceorientation",onOrient);
+    window.addEventListener("deviceorientationabsolute",onOrient);
+    return true;
+  }catch(e){ return false; }
+}
+let watchId=null;
+function startGPS(){
+  if(!("geolocation" in navigator)) return;
+  if(watchId!=null) navigator.geolocation.clearWatch(watchId);
+  watchId = navigator.geolocation.watchPosition(p=>{
+    S.locDenied=false;
+    if(S.demo||S.paused) return;
+    const c=p.coords;
+    S.loc={lat:c.latitude,lon:c.longitude,alt:c.altitude,acc:c.accuracy,aacc:c.altitudeAccuracy,
+           speed:c.speed,course:c.heading,time:p.timestamp};
+  },err=>{ if(err.code===1) S.locDenied=true; },{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+}
+let audioCtx=null, analyser=null, micStream=null, buf=null;
+async function startMic(){
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended") await audioCtx.resume();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser(); analyser.fftSize=2048;
+    src.connect(analyser); buf=new Float32Array(analyser.fftSize);
+    S.micOK=true; return true;
+  }catch(e){ S.micOK=false; S.micErr=true; return false; }
+}
+function pollMic(){
+  if(!S.micOK||!analyser||S.demo||S.paused) return;
+  analyser.getFloatTimeDomainData(buf);
+  let sum=0; for(let i=0;i<buf.length;i++) sum+=buf[i]*buf[i];
+  const rms=Math.sqrt(sum/buf.length), db=20*Math.log10(Math.max(rms,1e-7));
+  S.sound={db, level:Math.min(Math.max((db+60)/60,0),1)};
+}
+
+/* ---------- Demo ---------- */
+let demoT=0;
+function tickDemo(dt){
+  demoT+=dt; const t=demoT;
+  S.acc={x:.16*Math.sin(t*3.1)+.05*Math.sin(t*11.3), y:.11*Math.sin(t*2.4+1.1), z:.07*Math.cos(t*5.5)};
+  S.rot={x:.55*57.3*Math.sin(t*1.4), y:.42*57.3*Math.cos(t*1.1), z:.3*57.3*Math.sin(t*.8+.6)};
+  S.roll=18*Math.sin(t*.6); S.pitch=11*Math.cos(t*.45);
+  S.heading=(t*10)%360; S.yaw=S.heading; S.hasHeading=true; S.headingAcc=6;
+  const gx=.32*Math.sin(t*.6), gy=.9*Math.cos(t*.6), gz=-.12, gm=Math.hypot(gx,gy,gz);
+  S.grav={x:gx/gm,y:gy/gm,z:gz/gm};
+  S.loc={lat:52.520008+.00012*Math.sin(t*.1),lon:13.404954+.00015*Math.cos(t*.1),alt:42+Math.sin(t*.12)*1.8,
+         acc:4.5,aacc:6,speed:1.35+.15*Math.sin(t*.3),course:S.heading,time:Date.now()};
+  const db=-46+8*Math.sin(t*.5)+3*Math.sin(t*4); S.sound={db,level:Math.min(Math.max((db+60)/60,0),1)};
+  S.rate=30; addSamples();
+}
+
+/* ---------- Zeichnen ---------- */
+function fit(cv){
+  const r=cv.getBoundingClientRect(), d=Math.min(window.devicePixelRatio||1,2);
+  const w=Math.max(1,Math.round(r.width*d)), h=Math.max(1,Math.round(r.height*d));
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+  const x=cv.getContext("2d"); x.setTransform(d,0,0,d,0,0); return {x,w:r.width,h:r.height};
+}
+function lines(cv,series,fixed){
+  const {x,w,h}=fit(cv); x.clearRect(0,0,w,h);
+  let lo=Infinity,hi=-Infinity;
+  if(fixed){lo=fixed[0];hi=fixed[1];}
+  else{ series.forEach(s=>s.d.forEach(v=>{if(v<lo)lo=v;if(v>hi)hi=v;}));
+    if(!isFinite(lo)){lo=-1;hi=1;} let sp=hi-lo; if(sp<1e-4)sp=1; lo-=sp*.18; hi+=sp*.18; }
+  const sp=hi-lo;
+  x.strokeStyle="rgba(255,255,255,.06)"; x.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=h*i/4;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
+  if(lo<0&&hi>0){const y=h*hi/sp;x.strokeStyle="rgba(255,255,255,.16)";x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
+  series.forEach(s=>{
+    const d=s.d; if(d.length<2) return;
+    const step=w/(N-1), off=w-(d.length-1)*step;
+    const pts=d.map((v,i)=>[off+i*step, 8+(h-16)*(1-(v-lo)/sp)]);
+    const path=()=>{x.beginPath();x.moveTo(pts[0][0],pts[0][1]);
+      for(let i=1;i<pts.length;i++){const p=pts[i-1],q=pts[i];x.quadraticCurveTo(p[0],p[1],(p[0]+q[0])/2,(p[1]+q[1])/2);}
+      x.lineTo(pts[pts.length-1][0],pts[pts.length-1][1]);};
+    if(s.fill){path();x.lineTo(pts[pts.length-1][0],h);x.lineTo(pts[0][0],h);x.closePath();
+      const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,s.c+"47");g.addColorStop(1,s.c+"00");x.fillStyle=g;x.fill();}
+    path();x.strokeStyle=s.c;x.lineWidth=1.8;x.lineCap="round";x.lineJoin="round";x.shadowColor=s.c;x.shadowBlur=4;x.stroke();x.shadowBlur=0;
+  });
+  if(!series.some(s=>s.d.length>1)){x.fillStyle="rgba(255,255,255,.35)";x.font="11px system-ui";x.textAlign="center";x.fillText("Warte auf Sensordaten …",w/2,h/2);}
+}
+function horizon(cv){
+  const {x,w,h}=fit(cv); x.clearRect(0,0,w,h);
+  const D=Math.min(w,h), cx=w/2, cy=h/2;
+  x.save(); x.beginPath(); x.arc(cx,cy,D/2-1,0,Math.PI*2); x.clip();
+  x.translate(cx,cy); x.rotate(-S.roll*Math.PI/180);
+  const off=Math.max(-1,Math.min(1,S.pitch/90))*D*.85;
+  let g=x.createLinearGradient(0,-D*1.3+off,0,off); g.addColorStop(0,"#2985f2"); g.addColorStop(1,"#6bd1ff");
+  x.fillStyle=g; x.fillRect(-D*1.3,-D*1.3+off,D*2.6,D*1.3);
+  g=x.createLinearGradient(0,off,0,D*1.3+off); g.addColorStop(0,"#5c296b"); g.addColorStop(1,"#140a1f");
+  x.fillStyle=g; x.fillRect(-D*1.3,off,D*2.6,D*1.3);
+  x.strokeStyle="rgba(255,255,255,.55)"; x.beginPath(); x.moveTo(-D*.6,off); x.lineTo(D*.6,off); x.stroke();
+  x.restore();
+  x.strokeStyle="rgba(255,255,255,.9)"; x.lineWidth=2; x.beginPath();
+  x.moveTo(cx-D*.3,cy);x.lineTo(cx-D*.08,cy);x.moveTo(cx+D*.08,cy);x.lineTo(cx+D*.3,cy);x.stroke();
+  x.beginPath(); x.arc(cx,cy,3.5,0,Math.PI*2); x.stroke();
+  x.strokeStyle="rgba(255,255,255,.3)"; x.lineWidth=1.5; x.beginPath(); x.arc(cx,cy,D/2-1,0,Math.PI*2); x.stroke();
+}
+function compass(cv){
+  const {x,w,h}=fit(cv); x.clearRect(0,0,w,h);
+  const cx=w/2, cy=h/2, R=Math.min(w,h)/2-6, rot=S.heading;
+  for(let i=0;i<72;i++){
+    const a=(i*5-rot)*Math.PI/180, major=i%9===0, med=i%3===0, r0=R-(major?17:med?11:6), r1=R-3;
+    x.strokeStyle=`rgba(255,255,255,${major?.9:med?.45:.22})`; x.lineWidth=major?2:1;
+    x.beginPath(); x.moveTo(cx+Math.sin(a)*r0,cy-Math.cos(a)*r0); x.lineTo(cx+Math.sin(a)*r1,cy-Math.cos(a)*r1); x.stroke();
+  }
+  x.textAlign="center"; x.textBaseline="middle";
+  [["N",0],["O",90],["S",180],["W",270]].forEach(([l,b])=>{
+    const a=(b-rot)*Math.PI/180, r=R-36; x.fillStyle=l==="N"?C.pink:"rgba(255,255,255,.7)";
+    x.font="800 15px system-ui"; x.fillText(l,cx+Math.sin(a)*r,cy-Math.cos(a)*r);
+  });
+  x.fillStyle=C.cyan; x.beginPath(); x.moveTo(cx,cy-R+2); x.lineTo(cx-7,cy-R+16); x.lineTo(cx+7,cy-R+16); x.fill();
+  x.fillStyle="#fff"; x.font="700 30px ui-rounded,system-ui"; x.fillText(Math.round(S.heading)+"°",cx,cy-4);
+  const L=["N","NO","O","SO","S","SW","W","NW"]; x.fillStyle=C.cyan; x.font="700 11px system-ui";
+  x.fillText(L[Math.round(S.heading/45)%8],cx,cy+22);
+}
+function wave(cv,vals,color){
+  const {x,w,h}=fit(cv); x.clearRect(0,0,w,h);
+  const n=48, d=vals.slice(-n), step=w/n; x.fillStyle=color+"c0";
+  d.forEach((v,i)=>{const bh=Math.max(2,v*h); const xx=w-(d.length-i)*step;
+    x.beginPath(); x.roundRect(xx,(h-bh)/2,Math.max(step*.5,1),bh,step*.25); x.fill();});
+}
+
+/* ---------- Studio ---------- */
+const SOURCES = {
+  accX:{t:"Accel X",u:"g",r:[-1,1],f:()=>S.acc.x,d:2}, accY:{t:"Accel Y",u:"g",r:[-1,1],f:()=>S.acc.y,d:2},
+  accZ:{t:"Accel Z",u:"g",r:[-1,1],f:()=>S.acc.z,d:2}, accM:{t:"Accel Betrag",u:"g",r:[0,1],f:()=>mag(S.acc),d:2},
+  gyroM:{t:"Gyro Betrag",u:"°/s",r:[0,360],f:()=>mag(S.rot),d:1},
+  roll:{t:"Roll",u:"°",r:[-90,90],f:()=>S.roll,d:1}, pitch:{t:"Nick",u:"°",r:[-90,90],f:()=>S.pitch,d:1},
+  heading:{t:"Kompass",u:"°",r:[0,360],f:()=>S.heading,d:0},
+  sound:{t:"Schallpegel",u:"dB",r:[-80,0],f:()=>S.sound.db,d:0},
+  speed:{t:"Tempo",u:"km/h",r:[0,30],f:()=>(S.loc&&S.loc.speed>0?S.loc.speed*3.6:0),d:1},
+  alt:{t:"GPS-Höhe",u:"m",r:[0,500],f:()=>(S.loc&&S.loc.alt!=null?S.loc.alt:0),d:0}
+};
+const PRESETS = () => [
+  {id:uid(),name:"Wasserwaage",src:"roll",tf:"abs",viz:"bar",min:0,max:30,scale:1,off:0,alert:true,above:false,thr:1,color:1},
+  {id:uid(),name:"Erschütterung",src:"accM",tf:"raw",viz:"number",min:0,max:1,scale:1,off:0,alert:true,above:true,thr:.25,color:5},
+  {id:uid(),name:"Lärmampel",src:"sound",tf:"raw",viz:"gauge",min:-80,max:0,scale:1,off:0,alert:true,above:true,thr:-30,color:4},
+  {id:uid(),name:"Tempo",src:"speed",tf:"smooth",viz:"gauge",min:0,max:25,scale:1,off:0,alert:false,above:true,thr:0,color:0},
+  {id:uid(),name:"Kompass",src:"heading",tf:"raw",viz:"number",min:0,max:360,scale:1,off:0,alert:false,above:true,thr:0,color:3}
+];
+function uid(){return Math.random().toString(36).slice(2,10);}
+let tools=[]; const rt={};
+function loadTools(){
+  try{tools=JSON.parse(localStorage.getItem("sensorlab.tools.v1")||"null");}catch(e){tools=null;}
+  if(!Array.isArray(tools)||!tools.length){tools=PRESETS();saveTools();}
+}
+function saveTools(){try{localStorage.setItem("sensorlab.tools.v1",JSON.stringify(tools));}catch(e){}}
+function evalTool(t){
+  const s=SOURCES[t.src]||SOURCES.accM, st=rt[t.id]||(rt[t.id]={sm:null,alarm:false,last:0});
+  let v=s.f();
+  if(t.tf==="abs")v=Math.abs(v);
+  else if(t.tf==="smooth"){st.sm=st.sm==null?v:st.sm+(v-st.sm)*.15;v=st.sm;}
+  v=v*t.scale+t.off;
+  const al=t.alert&&(t.above?v>t.thr:v<t.thr);
+  if(al&&!st.alarm&&navigator.vibrate)try{navigator.vibrate(120);}catch(e){}
+  st.alarm=al; st.v=v; return {v,al,s};
+}
+function fmt(t,v){const s=SOURCES[t.src]||SOURCES.accM; return fix(v,s.d);}
+function renderTools(){
+  const g=$("tool-grid"); g.innerHTML="";
+  tools.forEach(t=>{
+    const col=PALETTE[t.color]||C.cyan, s=SOURCES[t.src]||SOURCES.accM;
+    const d=document.createElement("div"); d.className="tile toolc"; d.dataset.id=t.id; d.style.borderColor=col+"38";
+    d.innerHTML=`<div class="v" style="color:#fff"><span class="val">–</span><small>${s.u}</small></div>
+      <div class="bar" style="margin-top:10px"><i class="fillbar" style="width:0;background:${col}"></i></div>
+      <div class="n">${esc(t.name)}</div><div class="s">${s.t}</div>`;
+    d.onclick=()=>openEditor(t.id); g.appendChild(d);
+  });
+}
+function updateTools(){
+  document.querySelectorAll(".toolc").forEach(el=>{
+    const t=tools.find(x=>x.id===el.dataset.id); if(!t) return;
+    const {v,al}=evalTool(t), p=Math.min(Math.max((v-t.min)/((t.max-t.min)||1),0),1);
+    el.querySelector(".val").textContent=fmt(t,v);
+    el.querySelector(".fillbar").style.width=(p*100)+"%";
+    el.classList.toggle("alarm",al);
+  });
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function openEditor(id){
+  const isNew=!id; const t=id?{...tools.find(x=>x.id===id)}:{id:uid(),name:"Mein Tool",src:"accM",tf:"raw",viz:"number",min:0,max:1,scale:1,off:0,alert:false,above:true,thr:0,color:0};
+  const opt=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}" ${k===sel?"selected":""}>${v}</option>`).join("");
+  $("sheet-box").innerHTML=`
+    <div class="head"><h1 style="font-size:20px;flex:1">${isNew?"Neues Tool":"Tool bearbeiten"}</h1><button class="ib" id="ed-x">✕</button></div>
+    <label>Name<input id="ed-name" value="${esc(t.name)}"></label>
+    <label>Sensorquelle<select id="ed-src">${opt(Object.fromEntries(Object.entries(SOURCES).map(([k,v])=>[k,v.t+" · "+v.u])),t.src)}</select></label>
+    <label>Signalform<select id="ed-tf">${opt({raw:"Rohwert",abs:"Betrag",smooth:"Geglättet"},t.tf)}</select></label>
+    <div class="two"><label>Faktor<input id="ed-scale" type="number" step="any" value="${t.scale}"></label><label>Offset<input id="ed-off" type="number" step="any" value="${t.off}"></label></div>
+    <div class="two"><label>Bereich min<input id="ed-min" type="number" step="any" value="${t.min}"></label><label>Bereich max<input id="ed-max" type="number" step="any" value="${t.max}"></label></div>
+    <label>Farbe<select id="ed-color">${opt(Object.fromEntries(["Cyan","Grün","Pink","Violett","Amber","Rot"].map((n,i)=>[i,n])),String(t.color))}</select></label>
+    <label class="chk"><span>Alarm bei Schwelle</span><input type="checkbox" id="ed-alert" ${t.alert?"checked":""}></label>
+    <div class="two"><label>Richtung<select id="ed-above">${opt({1:"Über Schwelle",0:"Unter Schwelle"},t.above?"1":"0")}</select></label><label>Schwelle<input id="ed-thr" type="number" step="any" value="${t.thr}"></label></div>
+    <button class="btn" id="ed-save">Sichern</button>
+    ${isNew?"":'<button class="btn g" id="ed-del" style="color:var(--red)">Löschen</button>'}`;
+  $("sheet").classList.add("on");
+  $("ed-x").onclick=closeSheet;
+  $("ed-src").onchange=()=>{const s=SOURCES[$("ed-src").value];$("ed-min").value=s.r[0];$("ed-max").value=s.r[1];};
+  $("ed-save").onclick=()=>{
+    const num=(i,d)=>{const v=parseFloat($(i).value);return Number.isFinite(v)?v:d;};
+    Object.assign(t,{name:$("ed-name").value.trim()||"Tool",src:$("ed-src").value,tf:$("ed-tf").value,scale:num("ed-scale",1),off:num("ed-off",0),
+      min:num("ed-min",0),max:num("ed-max",1),color:parseInt($("ed-color").value,10),alert:$("ed-alert").checked,above:$("ed-above").value==="1",thr:num("ed-thr",0)});
+    if(t.min===t.max)t.max=t.min+1;
+    if(isNew)tools.push(t);else tools[tools.findIndex(x=>x.id===t.id)]=t;
+    delete rt[t.id]; saveTools(); renderTools(); closeSheet();
+  };
+  if($("ed-del"))$("ed-del").onclick=()=>{tools=tools.filter(x=>x.id!==t.id);saveTools();renderTools();closeSheet();};
+}
+function closeSheet(){$("sheet").classList.remove("on");}
+$("sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();});
+$("add-tool").onclick=()=>openEditor(null);
+$("presets-btn").onclick=()=>{tools=PRESETS();saveTools();renderTools();};
+
+/* ---------- Oberfläche ---------- */
+function showView(v){
+  document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  $("main").scrollTop=0; curView=v;
+}
+let curView="dash";
+$("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)showView(b.dataset.v);});
+$("motion-seg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  document.querySelectorAll("#motion-seg button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".m-pane").forEach(p=>p.style.display=p.id==="m-"+b.dataset.m?"flex":"none");
+});
+$("pausebtn").onclick=()=>{S.paused=!S.paused;$("pill").classList.toggle("off",S.paused);$("pilltxt").textContent=S.paused?"PAUSE":"LIVE";$("pausebtn").textContent=S.paused?"▶":"❚❚";};
+$("demo-toggle").onchange=e=>setDemo(e.target.checked);
+function setDemo(on){
+  S.demo=on; $("demo-toggle").checked=on; $("sub").textContent=on?"Demo-Modus · simulierte Werte":"Alle Sensoren live";
+  try{localStorage.setItem("sensorlab.demo",on?"1":"0");}catch(e){}
+  S.tr.acc=[[],[],[]];S.tr.gyro=[[],[],[]];S.tr.sound=[];S.peakA=0;S.peakG=0;
+}
+$("mic-btn").onclick=async()=>{await startMic();};
+$("reset-btn").onclick=async()=>{await activate();};
+
+async function activate(){
+  S.motionOK = await reqMotion();
+  startGPS();
+  await startMic();
+}
+function done(){ $("welcome").classList.remove("on"); S.started=true; try{localStorage.setItem("sensorlab.onboarded","1");}catch(e){} }
+$("start-real").onclick=async()=>{ setDemo(false); await activate(); done(); };
+$("start-demo").onclick=()=>{ setDemo(true); done(); };
+
+function tile(l,id,u){return `<div class="tile"><div class="l">${l}</div><div class="v" id="${id}"></div></div>`;}
+$("dash-tiles").innerHTML=
+  tile("Tempo","t-speed")+tile("Höhe","t-alt")+tile("Schallpegel","t-db")+tile("Drehrate","t-gyro")+tile("Kompass","t-head")+tile("Sensorrate","t-rate");
+const set=(id,v,u)=>{const e=$(id); const s=u?v+"<small>"+u+"</small>":v; if(e.__s!==s){e.innerHTML=s;e.__s=s;}};
+
+function update(){
+  const a=S.acc, g=S.rot, L=S.loc;
+  // Warnungen
+  const noMotion = !S.demo && S.started && !S.gotMotion;
+  $("warn").style.display=noMotion?"block":"none";
+  if(noMotion)$("warn").textContent="Noch keine Bewegungsdaten. Tippe auf Umgebung → „Berechtigungen neu anfragen“ oder starte den Demo-Modus. Auf dem Desktop gibt es keine Sensoren.";
+  $("loc-warn").style.display=S.locDenied&&!S.demo?"block":"none";
+  if(S.locDenied)$("loc-warn").textContent="Standort verweigert. iOS: Einstellungen → Datenschutz → Ortungsdienste → Safari-Websites.";
+  const micBad=!S.micOK&&!S.demo&&S.started;
+  $("mic-warn").style.display=micBad&&S.micErr?"block":"none";
+  $("mic-warn").textContent="Mikrofon nicht verfügbar oder nicht erlaubt.";
+  $("mic-btn").style.display=micBad?"block":"none";
+
+  if(curView==="dash"){
+    horizon($("horizon"));
+    set("d-roll",fix(S.roll)+"°"); set("d-pitch",fix(S.pitch)+"°"); set("d-yaw",fix(S.yaw,0)+"°"); set("d-grav",fix(mag(S.grav),2)+" g");
+    set("d-ax",fix(a.x,2)+" g"); set("d-ay",fix(a.y,2)+" g"); set("d-az",fix(a.z,2)+" g");
+    lines($("c-dash-acc"),[{d:S.tr.acc[0],c:C.green,fill:1},{d:S.tr.acc[1],c:C.cyan,fill:1},{d:S.tr.acc[2],c:C.pink,fill:1}]);
+    set("t-speed",L&&L.speed>0?fix(L.speed*3.6):"–","km/h"); set("t-alt",L&&L.alt!=null?fix(L.alt,0):"–","m");
+    set("t-db",fix(S.sound.db,0),"dB"); set("t-gyro",fix(mag(g)),"°/s");
+    set("t-head",S.hasHeading?fix(S.heading,0):"–","°"); set("t-rate",S.rate||"–","Hz");
+  } else if(curView==="motion"){
+    const m=document.querySelector("#motion-seg .on").dataset.m;
+    if(m==="acc"){
+      set("m-ax",fix(a.x,3)+" g");set("m-ay",fix(a.y,3)+" g");set("m-az",fix(a.z,3)+" g");
+      set("m-amag",fix(mag(a),3),"g"); set("m-apeak",fix(S.peakA,3),"g");
+      lines($("c-acc"),[{d:S.tr.acc[0],c:C.green},{d:S.tr.acc[1],c:C.cyan},{d:S.tr.acc[2],c:C.pink}]);
+    } else if(m==="gyro"){
+      set("m-gx",fix(g.x)+"°/s");set("m-gy",fix(g.y)+"°/s");set("m-gz",fix(g.z)+"°/s");
+      set("m-gmag",fix(mag(g)),"°/s"); set("m-gpeak",fix(S.peakG),"°/s");
+      lines($("c-gyro"),[{d:S.tr.gyro[0],c:C.green},{d:S.tr.gyro[1],c:C.cyan},{d:S.tr.gyro[2],c:C.pink}]);
+    } else {
+      horizon($("horizon2"));
+      set("a-roll",fix(S.roll),"°");set("a-pitch",fix(S.pitch),"°");set("a-yaw",fix(S.yaw,0),"°");set("a-grav",fix(mag(S.grav),2),"g");
+    }
+  } else if(curView==="loc"){
+    compass($("compass"));
+    set("l-head",S.hasHeading?fix(S.heading,0)+"°":"–"); set("l-hacc",S.headingAcc!=null?"± "+fix(S.headingAcc,0)+"°":"–");
+    set("l-lat",L?fix(L.lat,6)+"°":"–"); set("l-lon",L?fix(L.lon,6)+"°":"–"); set("l-acc",L?"± "+fix(L.acc,1)+" m":"–");
+    set("l-time",L?new Date(L.time).toLocaleTimeString("de-DE"):"–");
+    set("l-speed",L&&L.speed>=0&&L.speed!=null?fix(L.speed*3.6):"–","km/h"); set("l-course",L&&L.course!=null&&!isNaN(L.course)?fix(L.course,0):"–","°");
+    set("l-alt",L&&L.alt!=null?fix(L.alt,1):"–","m"); set("l-aacc",L&&L.aacc!=null?fix(L.aacc,1):"–","m");
+  } else if(curView==="env"){
+    const db=S.sound.db;
+    set("e-db",fix(db,0));
+    $("e-bar").style.width=(S.sound.level*100)+"%";
+    const live=S.micOK||S.demo;
+    set("e-label",!live?"INAKTIV":db<-55?"SEHR LEISE":db<-40?"LEISE":db<-25?"MODERAT":db<-12?"LAUT":"SEHR LAUT");
+    wave($("c-sound"),S.tr.sound,C.pink);
+    set("e-screen",screen.width+"×"+screen.height); set("e-lang",navigator.language); set("e-online",navigator.onLine?"ja":"nein");
+    set("e-rate",S.rate?S.rate+" Hz":"–");
+  } else if(curView==="studio"){
+    updateTools();
+  }
+}
+if(navigator.getBattery){navigator.getBattery().then(b=>{
+  const u=()=>set("e-bat",Math.round(b.level*100)+" %"+(b.charging?" · lädt":""));u();b.onlevelchange=u;b.onchargingchange=u;});
+} else { document.addEventListener("DOMContentLoaded",()=>{});}
+
+let last=performance.now(), soundTick=0;
+function frame(now){
+  const dt=Math.min((now-last)/1000,.1); last=now;
+  if(S.demo&&!S.paused)tickDemo(dt);
+  else if(!S.demo&&S.started&&!S.paused&&S.gotMotion){ /* Samples kommen per Event */ }
+  pollMic(); if(!S.paused){ push(S.tr.sound,S.sound.level,150); }
+  update(); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- Start ---------- */
+loadTools(); renderTools();
+if(!$("e-bat").textContent) $("e-bat").textContent="nicht verfügbar";
+(async()=>{
+  let onboarded=false,demo=false;
+  try{onboarded=localStorage.getItem("sensorlab.onboarded")==="1";demo=localStorage.getItem("sensorlab.demo")==="1";}catch(e){}
+  if(onboarded){
+    S.started=true;
+    if(demo){setDemo(true);return;}
+    // iOS verlangt für Bewegungssensoren eine Geste → beim ersten Tippen anfragen
+    const needsGesture=typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function";
+    if(needsGesture){
+      const once=async()=>{document.removeEventListener("click",once);await activate();};
+      document.addEventListener("click",once);
+      startGPS();
+    } else { await activate(); }
+  } else { $("welcome").classList.add("on"); }
+})();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
