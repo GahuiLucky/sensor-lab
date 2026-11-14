@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sensor Lab – Design-Vorschau</title>
+<style>
+  :root{
+    --cyan:#4dd9ff; --violet:#9b7bff; --pink:#ff6fb5;
+    --green:#59f29e; --amber:#ffc55a; --red:#ff6161;
+  }
+  *{box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    margin:0; padding:32px; min-height:100vh;
+    background:#05060c; color:#fff; overflow-x:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+  body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0}
+  body::before{background:radial-gradient(48% 42% at 84% 6%,rgba(155,123,255,.22),transparent 70%)}
+  body::after{background:radial-gradient(45% 40% at 10% 94%,rgba(77,217,255,.14),transparent 70%)}
+
+  .stage{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:50px;flex-wrap:wrap;max-width:1240px}
+  .intro{width:310px}
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:.16em;color:rgba(255,255,255,.5);text-transform:uppercase}
+  .eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+  h1{font-size:48px;line-height:1;letter-spacing:-.03em;margin:18px 0 16px;font-weight:800}
+  h1 span{background:linear-gradient(92deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:13.5px;line-height:1.65;color:rgba(255,255,255,.52);margin:0 0 22px}
+  .tip{font-size:11px;line-height:1.7;color:rgba(255,255,255,.34);border-left:2px solid rgba(77,217,255,.35);padding-left:12px}
+  .tip b{color:rgba(255,255,255,.6);font-weight:600}
+
+  .aside{width:272px;display:flex;flex-direction:column;gap:14px}
+  .panel{background:linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:18px}
+  .panel-title{font-size:8.5px;letter-spacing:.18em;font-weight:700;color:rgba(255,255,255,.32);margin-bottom:13px}
+  .sensor-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;font-size:11.5px;color:rgba(255,255,255,.62)}
+  .sensor-list li{display:flex;align-items:center;gap:8px}
+  .sensor-list i{width:5px;height:5px;border-radius:50%;flex:none}
+  .panel p{margin:0;font-size:10.5px;line-height:1.7;color:rgba(255,255,255,.38)}
+
+  /* ---------- Telefon ---------- */
+  .phone{
+    width:390px;height:844px;flex:none;padding:11px;border-radius:56px;position:relative;
+    background:linear-gradient(155deg,#3a3d4e,#14151d 40%,#0a0b11);
+    box-shadow:0 50px 110px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .device{
+    position:relative;width:100%;height:100%;border-radius:46px;overflow:hidden;
+    background:
+      radial-gradient(120% 75% at 88% 0%,rgba(155,123,255,.30),transparent 62%),
+      radial-gradient(100% 65% at 8% 100%,rgba(77,217,255,.15),transparent 60%),
+      linear-gradient(160deg,#0b0d18,#05060d);
+  }
+  .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:112px;height:31px;border-radius:20px;background:#000;z-index:30}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:54px;padding:17px 26px 0;display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;z-index:25;letter-spacing:.02em}
+  .sicons{display:flex;align-items:center;gap:5px;color:#fff}
+  .sicons svg{height:10px;fill:currentColor}
+  .sicons svg.stroke{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+
+  .screen{
+    position:absolute;inset:54px 0 88px 0;overflow-y:auto;padding:8px 16px 26px;
+    scrollbar-width:none;
+  }
+  .screen::-webkit-scrollbar{display:none}
+
+  .tabbar{
+    position:absolute;left:0;right:0;bottom:0;height:88px;padding:9px 10px 26px;
+    display:flex;gap:3px;z-index:25;
+    background:rgba(9,10,17,.72);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
+    border-top:1px solid rgba(255,255,255,.07);
+  }
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:5px 0 0;cursor:pointer;border-radius:14px;color:rgba(255,255,255,.38);font-family:inherit;font-size:8.5px;font-weight:600;line-height:1.2;letter-spacing:.01em;transition:color .2s}
+  .tab svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .tab.active{color:var(--cyan)}
+  .home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.42);z-index:26}
+
+  /* ---------- Bausteine ---------- */
+  .app-head{display:flex;align-items:center;gap:8px;margin:2px 0 14px}
+  .head-text{flex:1;min-width:0}
+  .head-text h2{font-size:24px;font-weight:800;letter-spacing:-.025em;margin:0}
+  .head-text p{font-size:10.5px;font-weight:500;color:rgba(255,255,255,.42);margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head-actions{display:flex;align-items:center;gap:7px}
+  .live{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:8.5px;font-weight:700;letter-spacing:.13em;color:rgba(255,255,255,.8)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.9s ease-in-out infinite}
+  .live.paused i{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:none}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.65}}
+  .iconbtn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.9);display:grid;place-items:center;padding:0;cursor:pointer;flex:none}
+  .iconbtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  .card{
+    position:relative;padding:16px;margin-bottom:12px;border-radius:26px;overflow:hidden;
+    background:linear-gradient(152deg,rgba(255,255,255,.095),rgba(255,255,255,.032));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 18px 38px rgba(0,0,0,.35);
+  }
+  .card-title{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:13px}
+  .tdot{width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 9px var(--c);flex:none}
+
+  .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:4.5px 0;font-size:11.5px;color:rgba(255,255,255,.52)}
+  .row b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+  .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
+  .rows{display:flex;flex-direction:column}
+  .grow{flex:1;min-width:0}
+  .mini-note{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,.45);padding-top:2px}
+  .mini-note svg{width:11px;height:11px;color:var(--green);fill:none;stroke:currentColor;stroke-width:2}
+  .mini-note span{color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+
+  .legend{display:flex;gap:10px;margin-bottom:8px}
+  .chip{flex:1;min-width:0}
+  .chip-k{display:flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;color:rgba(255,255,255,.42);letter-spacing:.04em}
+  .chip-k i{width:5px;height:5px;border-radius:50%}
+  .chip b{display:block;font-size:13.5px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  canvas.chart{display:block;width:100%}
+  .horizon{width:118px;height:118px;flex:none;display:block}
+  .wide-canvas{display:block;width:100%}
+  .horizon-row{display:flex;align-items:center;gap:15px}
+
+  .studio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .studio-card{padding:13px;border-radius:22px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);box-shadow:0 12px 26px rgba(0,0,0,.25)}
+  .studio-card .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;color:rgba(255,255,255,.28)}
+  .studio-card .sc-ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);color:var(--c)}
+  .studio-card .sc-ico svg{width:15px;height:15px}
+  .studio-card .sc-vis svg{width:12px;height:12px}
+  .studio-card .sc-val{display:flex;align-items:baseline;gap:3px;line-height:1}
+  .studio-card .sc-val span{font-size:21px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .studio-card .sc-val em{font-style:normal;font-size:8.5px;font-weight:600;color:rgba(255,255,255,.4)}
+  .studio-card .sc-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.86);margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .studio-card .sc-src{font-size:8.5px;font-weight:500;color:rgba(255,255,255,.34);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .studio-note{font-size:10.5px;line-height:1.65;color:rgba(255,255,255,.45);margin-bottom:11px}
+  .studio-flow{display:flex;align-items:center;gap:7px;font-size:8.5px;font-weight:600;color:rgba(255,255,255,.6)}
+  .studio-flow span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07)}
+  .studio-flow b{color:rgba(255,255,255,.22);font-weight:700}
+
+  .rings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+  .ring-card{padding:13px 8px 12px;border-radius:22px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:3px}
+  .gauge{position:relative;display:grid;place-items:center;width:62px;height:62px;border-radius:50%}
+  .gauge::before{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(var(--c) calc(var(--p) * 1%),rgba(255,255,255,.08) 0);
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--sw,7px)),#000 calc(100% - var(--sw,7px) + 1px));
+    mask:radial-gradient(farthest-side,transparent calc(100% - var(--sw,7px)),#000 calc(100% - var(--sw,7px) + 1px));
+  }
+  .gauge.big{width:120px;height:120px}
+  .gauge.mid{width:88px;height:88px}
+  .gauge-ico{position:relative;color:#fff;display:grid;place-items:center}
+  .gauge-ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .gauge-stack{position:relative;text-align:center;line-height:1.1}
+  .gauge-stack b{display:block;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .gauge-stack span{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.45)}
+  .gauge-stack.small b{font-size:17px}
+  .gauge-stack.small span{font-size:8px}
+  .ring-v{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:8px;white-space:nowrap}
+  .ring-k{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.42)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .grid.tight{margin-bottom:8px}
+  .tile{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:12px 13px}
+  .tile .k{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,.52);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .k i{width:5px;height:5px;border-radius:50%;flex:none}
+  .tile .v{display:flex;align-items:baseline;gap:3px;font-variant-numeric:tabular-nums;min-width:0}
+  .tile .v span:first-child{font-size:22px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .u{font-size:9px;font-weight:500;color:rgba(255,255,255,.38);white-space:nowrap}
+
+  .compass-row{display:flex;align-items:center;gap:16px}
+  .compass-wrap{position:relative;display:grid;place-items:center;flex:none}
+  .compass-wrap canvas{display:block}
+  #compass-dash{width:132px;height:132px}
+  #compass-big{width:250px;height:250px}
+  .compass-wrap.big{width:100%;margin:0 auto 12px}
+  .compass-read{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none}
+  .compass-read b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .compass-read span{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--cyan)}
+
+  .seg{display:flex;gap:2px;padding:2px;border-radius:10px;background:rgba(255,255,255,.09);margin-bottom:12px}
+  .seg button{flex:1;border:0;background:none;color:rgba(255,255,255,.6);font-family:inherit;font-size:10.5px;font-weight:600;padding:8px 0;border-radius:8px;cursor:pointer}
+  .seg button.on{background:rgba(255,255,255,.18);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+
+  .stat-head,.stat-row{display:grid;grid-template-columns:44px 1fr 1fr 1fr;gap:6px;font-variant-numeric:tabular-nums}
+  .stat-head{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:6px;text-align:right}
+  .stat-head span:first-child{text-align:left}
+  .stat-row{align-items:center;padding:5px 0;font-size:11.5px;color:rgba(255,255,255,.85);text-align:right}
+  .stat-row .axis{display:flex;align-items:center;gap:6px;justify-content:flex-start;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.65)}
+  .stat-row .axis i{width:5px;height:5px;border-radius:50%}
+  .card-note{font-size:9px;line-height:1.6;color:rgba(255,255,255,.3);margin-top:10px}
+
+  .tilt-wrap{height:200px;display:grid;place-items:center;perspective:760px}
+  .tilt{
+    width:88px;height:152px;border-radius:24px;position:relative;
+    background:linear-gradient(155deg,rgba(77,217,255,.34),rgba(155,123,255,.26) 60%,rgba(255,255,255,.06));
+    border:1px solid rgba(255,255,255,.34);
+    box-shadow:0 26px 45px rgba(0,0,0,.5);
+    transition:transform .08s linear;
+  }
+  .tilt::after{content:"";position:absolute;inset:20px 15px;border-radius:15px;border:1px solid rgba(255,255,255,.18)}
+
+  .card.activity{display:flex;align-items:center;gap:15px}
+  .act-icon{width:74px;height:74px;border-radius:50%;flex:none;display:grid;place-items:center;background:rgba(89,242,158,.14);border:1px solid rgba(89,242,158,.32);color:var(--green)}
+  .act-icon svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .cap{font-size:8.5px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.38)}
+  .act-title{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:3px 0 2px}
+  .act-sub{font-size:10px;font-weight:500;color:rgba(255,255,255,.42)}
+
+  .steps-row{display:flex;align-items:center;gap:20px}
+  .big-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+  .big-ring-text b{font-size:23px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .big-ring-text span{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.45)}
+  .big-ring-wrap{position:relative;flex:none;display:grid;place-items:center}
+
+  .sound-head{display:flex;align-items:baseline;gap:5px;margin-bottom:12px}
+  .sound-head b{font-size:42px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+  .sound-head span{font-size:11px;font-weight:600;color:rgba(255,255,255,.38)}
+  .sound-head em{margin-left:auto;font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.12em;color:var(--pink);background:rgba(255,111,181,.14);border-radius:999px;padding:5px 9px}
+  .meter{height:10px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:12px}
+  .meter-fill{height:100%;width:30%;border-radius:999px;background:linear-gradient(90deg,rgba(255,111,181,.7),var(--pink));box-shadow:0 0 12px rgba(255,111,181,.5);transition:width .12s linear}
+
+  .device-row{display:flex;align-items:center;gap:18px;margin-bottom:4px}
+  .batt-wrap{position:relative;display:grid;place-items:center;flex:none;width:88px;height:88px}
+  .batt-wrap b{position:absolute;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:6px}
+  .sw-title{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.85)}
+  .sw-sub{font-size:9px;color:rgba(255,255,255,.38);margin-top:2px}
+  .switch{width:42px;height:25px;border-radius:999px;background:rgba(255,255,255,.16);position:relative;flex:none;cursor:pointer;transition:background .2s}
+  .switch span{position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 2px 5px rgba(0,0,0,.35)}
+  .switch.on{background:var(--cyan)}
+  .switch.on span{left:19.5px}
+
+  /* ---------- Einstellungs-Sheet ---------- */
+  .sheet{position:absolute;inset:0;z-index:40;display:none;background:rgba(4,5,10,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+  .sheet.open{display:block}
+  .sheet-panel{position:absolute;left:9px;right:9px;bottom:9px;top:86px;border-radius:30px;padding:18px;overflow-y:auto;background:linear-gradient(170deg,#10131f,#080a12);border:1px solid rgba(255,255,255,.11);box-shadow:0 -20px 60px rgba(0,0,0,.6)}
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+  .sheet-eyebrow{font-size:8.5px;letter-spacing:.18em;font-weight:700;color:rgba(255,255,255,.35)}
+  .sheet-head h3{font-size:22px;font-weight:800;margin:3px 0 0;letter-spacing:-.02em}
+  .sheet-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:14px;margin-bottom:10px}
+  .sheet-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:10px}
+  .sheet-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:rgba(255,255,255,.72);padding:4px 0}
+  .sheet-row svg{width:12px;height:12px;color:var(--green);fill:none;stroke:currentColor;stroke-width:2.2}
+  .sheet-row em{margin-left:auto;font-style:normal;font-size:9px;font-weight:600;color:var(--green)}
+  .sheet-row.off svg,.sheet-row.off em{color:rgba(255,255,255,.3)}
+  .sheet-note{font-size:9.5px;line-height:1.7;color:rgba(255,255,255,.32);margin:14px 2px 4px}
+  .phone-caption{margin-top:18px;text-align:center;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.3)}
+
+  @media (max-width:1120px){
+    .aside{display:none}
+    .intro{width:100%;max-width:420px;text-align:center}
+    .eyebrow{justify-content:center}
+    .tip{border-left:0;padding-left:0}
+    .stage{gap:28px}
+  }
+  @media (max-width:520px){
+    body{padding:16px}
+    .phone{transform:scale(.86);transform-origin:top center}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="intro">
+    <div class="eyebrow"><i></i>iOS · SwiftUI · Sensor-Dashboard</div>
+    <h1>Sensor <span>Lab</span></h1>
+    <p class="lead">Alle Sensoren des iPhones live – als ruhige, dunkle Oberfläche mit eigenen Diagrammen, Kompassrose und künstlichem Horizont.</p>
+    <p class="tip">Das ist die <b>Design-Vorschau im Browser</b>, nicht die kompilierte App. Tippe unten im Telefon auf die Tabs, um alle sechs Screens zu sehen.</p>
+  </div>
+
+  <div>
+    <div class="phone">
+      <div class="device">
+        <div class="island"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="sicons">
+            <svg viewBox="0 0 20 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5.5" y="6" width="3" height="6" rx="1"/><rect x="11" y="3.5" width="3" height="8.5" rx="1"/><rect x="16.5" y="1" width="3" height="11" rx="1"/></svg>
+            <svg class="stroke" viewBox="0 0 16 12"><path d="M1 4.6a10.5 10.5 0 0 1 14 0"/><path d="M3.6 7.4a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 10.1a3 3 0 0 1 3.6 0"/></svg>
+            <svg viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.6"/><rect x="23" y="4" width="2" height="4" rx="1"/></svg>
+          </span>
+        </div>
+        <main class="screen" id="screen"></main>
+        <nav class="tabbar" id="tabs"></nav>
+        <div class="home"></div>
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+    <div class="phone-caption">iPhone · 390 × 844 pt · Live-Demodaten</div>
+  </div>
+
+  <aside class="aside">
+    <div class="panel">
+      <div class="panel-title">Live-Sensoren</div>
+      <ul class="sensor-list">
+        <li><i style="background:var(--green)"></i>Accelerometer &amp; Gyroskop</li>
+        <li><i style="background:var(--cyan)"></i>Lage, Schwerkraft &amp; Magnetfeld</li>
+        <li><i style="background:var(--pink)"></i>GPS, Höhe &amp; Kompass</li>
+        <li><i style="background:var(--violet)"></i>Schritte, Distanz &amp; Aktivität</li>
+        <li><i style="background:var(--amber)"></i>Barometer &amp; Schallpegel</li>
+        <li><i style="background:var(--cyan)"></i>Akku, Thermik &amp; Ausrichtung</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="panel-title">In der App</div>
+      <p>Sechs Screens inklusive Studio-Baukasten, Demo-Modus, Sensorverfügbarkeit und ein selbst gezeichnetes App-Icon. Alle Messwerte bleiben lokal auf dem Gerät.</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Basisdaten ---------- */
+const C = {
+  cyan: "#4dd9ff",
+  violet: "#9b7bff",
+  pink: "#ff6fb5",
+  green: "#59f29e",
+  amber: "#ffc55a",
+  red: "#ff6161"
+};
+
+const state = { tab: "overview", mode: "accel", paused: false };
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+function setText(id, text) {
+  const el = $(id);
+  if (el && el.textContent !== text) el.textContent = text;
+}
+
+function setGauge(id, progress) {
+  const el = $(id);
+  if (el) el.style.setProperty("--p", String(Math.round(clamp(progress, 0, 1) * 100)));
+}
+
+function rgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + alpha + ")";
+}
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  grid: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+  gyro: '<circle cx="12" cy="12" r="5.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+  pin: '<path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/>',
+  walk: '<circle cx="13" cy="4.6" r="1.9"/><path d="M11.4 8.4 9.4 12l2 2.2.9 6M12.2 10l3 2.8 1.8 4.8M9.3 21l2.1-4.8"/>',
+  gauge: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4.2-4.6"/><circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none"/>',
+  pause: '<path d="M9 5v14M15 5v14"/>',
+  play: '<path d="M8 5.2l11 6.8-11 6.8z" fill="currentColor" stroke="none"/>',
+  sliders: '<path d="M4 8h8M17 8h3M4 16h3M11 16h9"/><circle cx="14.5" cy="8" r="2.2"/><circle cx="8.5" cy="16" r="2.2"/>',
+  walkBig: '<circle cx="13.5" cy="4.6" r="2"/><path d="M11.6 8.6 9.4 13l2.2 2.4 1 5.6M12.4 10.4l3.2 3 1.9 4.6M9 21l2.4-5.4"/>',
+  battery: '<rect x="3" y="7" width="16" height="10" rx="3"/><rect x="20.5" y="10" width="1.8" height="4" rx="1" fill="currentColor" stroke="none"/><path d="M6.5 10v4M10 10v4" stroke-width="1.4"/>',
+  wave: '<path d="M3 12h2.5l2-5 3 10 2.5-7 2 4h1.5l1.5-3 1.5 1h2.5"/>',
+  check: '<path d="M20 6 9.4 17 4 11.6"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  arrowDown: '<path d="M12 4v16M6 14l6 6 6-6"/>',
+  hammer: '<path d="M13.5 6.5 17 3l4 4-3.5 3.5z"/><path d="M10.8 9.2 3.5 16.5a2.1 2.1 0 0 0 3 3l7.3-7.3z"/>'
+};
+
+function icon(name) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || "") + '</svg>';
+}
+
+/* ---------- Templates ---------- */
+const row = (key, value) => '<div class="row"><span>' + key + '</span>' + value + '</div>';
+const chip = (label, id, color, initial) =>
+  '<div class="chip"><div class="chip-k"><i style="background:' + color + '"></i>' + label + '</div><b id="' + id + '">' + initial + '</b></div>';
+const tile = (id, label, value, unit, color) =>
+  '<div class="tile"><div class="k"><i style="background:' + color + '"></i>' + label + '</div><div class="v"><span id="' + id + '">' + value + '</span><span class="u">' + unit + '</span></div></div>';
+const ringCard = (key, label, color, iconName) =>
+  '<div class="ring-card"><div class="gauge" id="' + key + '-gauge" style="--p:45;--c:' + color + ';--sw:7px"><span class="gauge-ico" style="color:' + color + '">' + icon(iconName) + '</span></div><b class="ring-v" id="' + key + '-val">–</b><span class="ring-k">' + label + '</span></div>';
+
+function head(title, subtitle, buttons) {
+  return '<div class="app-head">' +
+    '<div class="head-text"><h2>' + title + '</h2><p>' + subtitle + '</p></div>' +
+    '<div class="head-actions">' +
+      '<div class="live"><i></i><span>LIVE</span></div>' +
+      (buttons
+        ? '<button class="iconbtn" id="pause-btn" aria-label="Pause">' + icon("pause") + '</button>' +
+          '<button class="iconbtn" id="settings-btn" aria-label="Einstellungen">' + icon("sliders") + '</button>'
+        : '') +
+    '</div></div>';
+}
+
+function viewOverview() {
+  return head("Sensor Lab", "Alle Sensoren live", true) + '<div class="card">' +
+      '<div class="card-title" style="--c:var(--cyan)"><i class="tdot"></i>Lage &amp; Neigung</div>' +
+      '<div class="horizon-row">' +
+        '<canvas id="horizon" class="horizon"></canvas>' +
+        '<div class="rows grow">' +
+          row("Roll", '<b id="ov-roll" style="color:var(--cyan)">0.0°</b>') +
+          row("Nick", '<b id="ov-pitch" style="color:var(--violet)">0.0°</b>') +
+          row("Gier", '<b id="ov-yaw" style="color:var(--pink)">0°</b>') +
+          '<div class="divider"></div>' +
+          '<div class="mini-note">' + icon("arrowDown") + 'Schwerkraft <span id="ov-g">1.00 g</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--green)"><i class="tdot"></i>Beschleunigung</div>' +
+      '<div class="legend">' +
+        chip("X", "ov-ax", C.green, "0.00 g") +
+        chip("Y", "ov-ay", C.cyan, "0.00 g") +
+        chip("Z", "ov-az", C.pink, "0.00 g") +
+      '</div>' +
+      '<canvas id="chart-accel" class="chart" style="height:140px"></canvas>' +
+    '</div>' +
+    '<div class="rings">' +
+      ringCard("steps", "Schritte", C.green, "walk") +
+      ringCard("battery", "Akku", C.amber, "battery") +
+      ringCard("sound", "Pegel", C.pink, "wave") +
+    '</div>' +
+    '<div class="grid">' +
+      tile("ov-speed", "Tempo", "4.9", "km/h", C.cyan) +
+      tile("ov-height", "Höhe", "43.8", "m", C.violet) +
+      tile("ov-pressure", "Luftdruck", "1013.2", "hPa", C.amber) +
+      tile("ov-sound", "Schallpegel", "-46", "dB", C.pink) +
+      tile("ov-magnetic", "Magnetfeld", "48", "µT", C.green) +
+      tile("ov-rotation", "Drehrate", "18.4", "°/s", C.cyan) +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--pink)"><i class="tdot"></i>Kompass</div>' +
+      '<div class="compass-row">' +
+        '<div class="compass-wrap"><canvas id="compass-dash"></canvas></div>' +
+        '<div class="rows grow">' +
+          row("Richtung", '<b id="ov-heading" style="color:var(--pink)">0°</b>') +
+          row("Genauigkeit", '<b id="ov-hacc">± 6°</b>') +
+          row("Breite", '<b id="ov-lat">52.52001°</b>') +
+          row("Länge", '<b id="ov-lon">13.40495°</b>') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function viewMotion() {
+  const modes = [["accel", "Accel"], ["rot", "Gyro"], ["mag", "Magnet"], ["attitude", "Lage"]];
+  return head("Bewegung", "Accelerometer · Gyroskop · Magnetometer", false) +
+    '<div class="seg">' + modes.map(([id, label]) =>
+      '<button class="' + (state.mode === id ? "on" : "") + '" data-mode="' + id + '">' + label + '</button>').join("") + '</div>' +
+    (state.mode === "attitude" ? motionAttitude() : motionVector());
+}
+
+function motionVector() {
+  const conf = state.mode === "rot"
+    ? { title: "Rotation", unit: " °/s", digits: 1, color: C.cyan }
+    : state.mode === "mag"
+      ? { title: "Magnetfeld", unit: " µT", digits: 1, color: C.violet }
+      : { title: "Beschleunigung", unit: " g", digits: 3, color: C.green };
+
+  return '<div class="card">' +
+      '<div class="card-title" style="--c:' + conf.color + '"><i class="tdot"></i>' + conf.title + '</div>' +
+      '<div class="legend">' +
+        chip("X", "m-x", C.green, "0" + conf.unit) +
+        chip("Y", "m-y", C.cyan, "0" + conf.unit) +
+        chip("Z", "m-z", C.pink, "0" + conf.unit) +
+      '</div>' +
+      '<canvas id="chart-motion" class="chart" style="height:190px"></canvas>' +
+    '</div>' +
+    '<div class="grid">' +
+      tile("m-mag", "Betrag", "0", conf.unit.trim(), C.cyan) +
+      tile("m-peak", "Spitzenwert", "0", conf.unit.trim(), C.violet) +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--cyan)"><i class="tdot"></i>Statistik</div>' +
+      '<div class="stat-head"><span>Achse</span><span>Ø</span><span>Min</span><span>Max</span></div>' +
+      statRow("x", "X", C.green) +
+      statRow("y", "Y", C.cyan) +
+      statRow("z", "Z", C.pink) +
+      '<div class="card-note">Fenster: letzte 120 Messpunkte</div>' +
+    '</div>';
+}
+
+function statRow(key, label, color) {
+  return '<div class="stat-row"><div class="axis"><i style="background:' + color + '"></i>' + label + '</div>' +
+    '<span id="stat-' + key + '-avg">0</span><span id="stat-' + key + '-min">0</span><span id="stat-' + key + '-max">0</span></div>';
+}
+
+function motionAttitude() {
+  return '<div class="card">' +
+      '<div class="card-title" style="--c:var(--pink)"><i class="tdot"></i>Künstlicher Horizont</div>' +
+      '<canvas id="motion-horizon" class="wide-canvas" style="height:200px"></canvas>' +
+    '</div>' +
+    '<div class="grid">' +
+      tile("m-roll", "Roll", "0.0", "°", C.cyan) +
+      tile("m-pitch", "Nick", "0.0", "°", C.violet) +
+      tile("m-yaw", "Gier", "0", "°", C.pink) +
+      tile("m-gravity", "Schwerkraft", "1.00", "g", C.green) +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--cyan)"><i class="tdot"></i>Gerätelage</div>' +
+      '<div class="tilt-wrap"><div class="tilt" id="tilt-device"></div></div>' +
+      '<div class="legend">' +
+        chip("gx", "m-gx", C.green, "0.00") +
+        chip("gy", "m-gy", C.cyan, "0.00") +
+        chip("gz", "m-gz", C.pink, "0.00") +
+      '</div>' +
+    '</div>';
+}
+
+function viewLocation() {
+  return head("Standort", "GPS · Kompass · Höhe", false) +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--pink)"><i class="tdot"></i>Kompass</div>' +
+      '<div class="compass-wrap big"><canvas id="compass-big"></canvas>' +
+        '<div class="compass-read"><b id="loc-heading">0°</b><span id="loc-cardinal">N</span></div>' +
+      '</div>' +
+      '<div class="legend">' +
+        chip("Magnetisch", "loc-mag", C.pink, "0°") +
+        chip("Geografisch", "loc-true", C.cyan, "0°") +
+        chip("Genauigkeit", "loc-acc", C.violet, "± 6°") +
+      '</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--cyan)"><i class="tdot"></i>Position</div>' +
+      row("Breitengrad", '<b id="loc-lat">–</b>') +
+      row("Längengrad", '<b id="loc-lon">–</b>') +
+      '<div class="divider"></div>' +
+      row("Höhe", '<b id="loc-alt">–</b>') +
+      row("GPS-Genauigkeit", '<b id="loc-accu">–</b>') +
+      row("Letztes Update", '<b id="loc-time">–</b>') +
+    '</div>' +
+    '<div class="grid">' +
+      tile("loc-speed", "Tempo", "4.9", "km/h", C.cyan) +
+      tile("loc-course", "Kurs", "0", "°", C.pink) +
+      tile("loc-alt2", "Höhe", "43.8", "m", C.violet) +
+      tile("loc-hacc", "Horiz. Genauigkeit", "4.5", "m", C.green) +
+      tile("loc-vacc", "Vert. Genauigkeit", "6.0", "m", C.amber) +
+      tile("loc-sacc", "Geschw. Genauigkeit", "0.4", "m/s", C.cyan) +
+    '</div>';
+}
+
+function viewActivity() {
+  return head("Aktivität", "Pedometer · Bewegungserkennung", false) +
+    '<div class="card activity">' +
+      '<div class="act-icon">' + icon("walkBig") + '</div>' +
+      '<div><div class="cap">AKTUELLE AKTIVITÄT</div><div class="act-title">Gehen</div>' +
+      '<div class="act-sub">Konfidenz hoch · seit 09:32</div></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--green)"><i class="tdot"></i>Heute</div>' +
+      '<div class="steps-row">' +
+        '<div class="big-ring-wrap">' +
+          '<div class="gauge big" id="act-gauge" style="--p:48;--c:var(--green);--sw:12px">' +
+            '<div class="gauge-stack"><b id="act-steps">4.820</b><span>Schritte</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rows grow">' +
+          row("Ziel", '<b>10.000</b>') +
+          row("Distanz", '<b id="act-dist">3.57 km</b>') +
+          row("Etagen", '<b id="act-floors">7 ↑ · 6 ↓</b>') +
+          row("Fortschritt", '<b id="act-progress">48 %</b>') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid">' +
+      tile("act-cadence", "Kadenz", "108", "S/min", C.green) +
+      tile("act-pace", "Pace", "11:20", "min/km", C.cyan) +
+      tile("act-distance", "Distanz", "3.57", "km", C.violet) +
+      tile("act-steps2", "Schritte", "4.820", "", C.green) +
+      tile("act-up", "Etagen auf", "7", "", C.amber) +
+      tile("act-down", "Etagen ab", "6", "", C.pink) +
+    '</div>' +
+    '<div class="card-note">Schritte und Distanz werden seit Mitternacht gezählt. Kadenz und Pace liefert das Pedometer nur während der Bewegung.</div>';
+}
+
+function viewEnvironment() {
+  return head("Umgebung", "Barometer · Mikrofon · Gerät", false) +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--amber)"><i class="tdot"></i>Barometer</div>' +
+      '<div class="grid tight">' +
+        tile("env-alt", "Rel. Höhe", "0.35", "m", C.amber) +
+        tile("env-pressure", "Luftdruck", "1013.2", "hPa", C.violet) +
+      '</div>' +
+      '<canvas id="chart-alt" class="chart" style="height:130px"></canvas>' +
+      '<div class="divider"></div>' +
+      row("Absolute Höhe (GPS)", '<b id="env-gps">43.8 m</b>') +
+      row("Druckverlauf", '<b style="color:var(--amber)">live</b>') +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--pink)"><i class="tdot"></i>Schallpegel</div>' +
+      '<div class="sound-head"><b id="env-db">-46</b><span>dBFS</span><em id="env-label">MODERAT</em></div>' +
+      '<div class="meter"><div class="meter-fill" id="env-meter"></div></div>' +
+      '<canvas id="wave" class="chart" style="height:44px"></canvas>' +
+      '<div class="card-note">dBFS ist ein relativer Pegel: 0 dB entspricht der Vollaussteuerung. Es werden keine Aufnahmen gespeichert.</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--violet)"><i class="tdot"></i>Gerät</div>' +
+      '<div class="device-row">' +
+        '<div class="batt-wrap">' +
+          '<div class="gauge mid" style="--p:72;--c:var(--amber);--sw:9px"></div>' +
+          '<b id="env-batt">72%</b>' +
+        '</div>' +
+        '<div class="rows grow">' +
+          row("Modell", '<b>iPhone16,2</b>') +
+          row("Thermik", '<b style="color:var(--amber)">Nominal</b>') +
+          row("Ausrichtung", '<b style="color:var(--cyan)">Hochformat</b>') +
+          row("Helligkeit", '<b>62 %</b>') +
+        '</div>' +
+      '</div>' +
+      '<div class="divider"></div>' +
+      row("Akku-Status", '<b>Akku</b>') +
+      row("Stromsparmodus", '<b>aus</b>') +
+      row("iOS-Version", '<b>26.0</b>') +
+      row("Gerätename", '<b>iPhone</b>') +
+      '<div class="switch-row">' +
+        '<div><div class="sw-title">Näherungssensor</div><div class="sw-sub">Display schaltet bei Bedeckung ab</div></div>' +
+        '<div class="switch" id="prox"><span></span></div>' +
+      '</div>' +
+    '</div>';
+}
+
+const studioCard = (id, name, source, unit, color, iconName) =>
+  '<div class="studio-card" style="--c:' + color + '">' +
+    '<div class="sc-top"><span class="sc-ico">' + icon(iconName) + '</span><span class="sc-vis">' + icon("wave") + '</span></div>' +
+    '<div class="sc-val"><span id="' + id + '">–</span><em>' + unit + '</em></div>' +
+    '<div class="sc-name">' + name + '</div>' +
+    '<div class="sc-src">' + source + '</div>' +
+  '</div>';
+
+function viewStudio() {
+  return head("Studio", "Baukasten für Sensortools", false) +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--cyan)"><i class="tdot"></i>Eigene Tools</div>' +
+      '<div class="studio-note">Quelle wählen, Signal umformen, Darstellung festlegen. Alles läuft live auf dem Gerät und bleibt lokal gespeichert.</div>' +
+      '<div class="studio-flow"><span>Quelle</span><b>→</b><span>Form</span><b>→</b><span>Darstellung</span></div>' +
+    '</div>' +
+    '<div class="studio-grid">' +
+      studioCard("st-level", "Wasserwaage", "Roll · Betrag", "°", C.green, "gauge") +
+      studioCard("st-shake", "Erschütterung", "Accel Betrag", "g", C.red, "wave") +
+      studioCard("st-noise", "Lärmampel", "Schallpegel", "dB", C.amber, "wave") +
+      studioCard("st-speed", "Tempo", "Tempo · geglättet", "km/h", C.cyan, "gauge") +
+      studioCard("st-steps", "Schrittziel", "Schritte", "", C.green, "walk") +
+      studioCard("st-height", "Höhenprofil", "Rel. Höhe", "m", C.violet, "pin") +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title" style="--c:var(--pink)"><i class="tdot"></i>Alarm &amp; Haptik</div>' +
+      row("Wasserwaage", '<b style="color:var(--green)">unter 1.0°</b>') +
+      row("Erschütterung", '<b style="color:var(--red)">über 0.25 g</b>') +
+      row("Lärmampel", '<b style="color:var(--amber)">über -30 dB</b>') +
+      row("Schrittziel", '<b style="color:var(--green)">10.000 Schritte</b>') +
+      '<div class="card-note">Alarme lösen haptisches Feedback aus. Neue Tools entstehen direkt in der App – ohne Neustart.</div>' +
+    '</div>';
+}
+
+const VIEWS = {
+  overview: viewOverview,
+  studio: viewStudio,
+  motion: viewMotion,
+  location: viewLocation,
+  activity: viewActivity,
+  environment: viewEnvironment
+};
+
+/* ---------- Demo-Sensordaten ---------- */
+function trace(fn, t, n = 120, dt = 0.05) {
+  const out = [];
+  for (let i = 0; i < n; i += 1) out.push(fn(t - (n - 1 - i) * dt));
+  return out;
+}
+
+function accelSeries(t) {
+  return [
+    trace((s) => 0.16 * Math.sin(s * 3.1) + 0.05 * Math.sin(s * 11.3), t),
+    trace((s) => 0.11 * Math.sin(s * 2.4 + 1.1), t),
+    trace((s) => 0.07 * Math.cos(s * 5.5), t)
+  ];
+}
+
+function rotationSeries(t) {
+  return [
+    trace((s) => 0.55 * Math.sin(s * 1.4) * 57.2958, t),
+    trace((s) => 0.42 * Math.cos(s * 1.1) * 57.2958, t),
+    trace((s) => 0.30 * Math.sin(s * 0.8 + 0.6) * 57.2958, t)
+  ];
+}
+
+function magneticSeries(t) {
+  return [
+    trace((s) => 19 + 5 * Math.sin(s * 0.7), t),
+    trace((s) => -6 + 3 * Math.cos(s * 0.9), t),
+    trace((s) => 43 + 4 * Math.sin(s * 0.3), t)
+  ];
+}
+
+function attitude(t) {
+  const gx = 0.32 * Math.sin(t * 0.6);
+  const gy = 0.90 * Math.cos(t * 0.6);
+  const gz = -0.12;
+  const length = Math.hypot(gx, gy, gz) || 1;
+  return {
+    roll: 0.32 * Math.sin(t * 0.6),
+    pitch: 0.20 * Math.cos(t * 0.45),
+    yaw: (t * 0.22) % (Math.PI * 2),
+    gx: gx / length,
+    gy: gy / length,
+    gz: gz / length
+  };
+}
+
+const deg = (r) => (r * 180) / Math.PI;
+const fmt = (v, d) => v.toFixed(d);
+const cardinal = (heading) => {
+  const names = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+  const norm = ((heading % 360) + 360) % 360;
+  return names[Math.round(norm / 45) % 8];
+};
+
+/* ---------- Canvas-Zeichnen ---------- */
+function setupCanvas(canvas) {
+  if (!canvas) return null;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (!w || !h) return null;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawChart(canvas, series, colors) {
+  const setup = setupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, w, h } = setup;
+
+  ctx.strokeStyle = "rgba(255,255,255,.06)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i += 1) {
+    const y = (h * i) / 4 + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  let min = Infinity;
+  let max = -Infinity;
+  series.forEach((arr) => arr.forEach((v) => {
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }));
+  if (!isFinite(min)) { min = -1; max = 1; }
+  let span = max - min;
+  if (span < 1e-4) span = 1;
+  const pad = span * 0.18;
+  min -= pad;
+  max += pad;
+  span = max - min;
+
+  const inset = 8;
+  const usable = Math.max(h - inset * 2, 1);
+  const mapY = (v) => clamp(inset + usable * (1 - (v - min) / span), 0, h);
+
+  if (min < 0 && max > 0) {
+    const y = mapY(0);
+    ctx.strokeStyle = "rgba(255,255,255,.13)";
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  series.forEach((arr, index) => {
+    if (arr.length < 2) return;
+    const color = colors[index];
+    const step = w / (arr.length - 1);
+    const pts = arr.map((v, i) => [i * step, mapY(v)]);
+
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, rgba(color, 0.24));
+    grad.addColorStop(1, rgba(color, 0));
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i += 1) {
+      const prev = pts[i - 1];
+      const cur = pts[i];
+      ctx.quadraticCurveTo(prev[0], prev[1], (prev[0] + cur[0]) / 2, (prev[1] + cur[1]) / 2);
+    }
+    ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i += 1) {
+      const prev = pts[i - 1];
+      const cur = pts[i];
+      ctx.quadraticCurveTo(prev[0], prev[1], (prev[0] + cur[0]) / 2, (prev[1] + cur[1]) / 2);
+    }
+    ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.shadowColor = rgba(color, 0.5);
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  });
+}
+
+function drawHorizon(canvas, att) {
+  const setup = setupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, w, h } = setup;
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) / 2 - 1;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.fillStyle = "#0b1020";
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.translate(cx, cy);
+  ctx.rotate(-att.roll);
+
+  const yOff = (att.pitch / (Math.PI / 2)) * r * 1.7;
+  const sky = ctx.createLinearGradient(0, -r * 2, 0, yOff);
+  sky.addColorStop(0, "#2b7ff0");
+  sky.addColorStop(1, "#7fd4ff");
+  ctx.fillStyle = sky;
+  ctx.fillRect(-r * 2, -r * 3 + yOff, r * 4, r * 3);
+
+  const ground = ctx.createLinearGradient(0, yOff, 0, r * 2);
+  ground.addColorStop(0, "#5b2a6b");
+  ground.addColorStop(1, "#140a1f");
+  ctx.fillStyle = ground;
+  ctx.fillRect(-r * 2, yOff, r * 4, r * 3);
+
+  ctx.strokeStyle = "rgba(255,255,255,.55)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-r * 2, yOff);
+  ctx.lineTo(r * 2, yOff);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = "rgba(255,255,255,.9)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 28, cy);
+  ctx.lineTo(cx - 9, cy);
+  ctx.moveTo(cx + 9, cy);
+  ctx.lineTo(cx + 28, cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,.32)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawCompass(canvas, heading) {
+  const setup = setupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, w, h } = setup;
+  const cx = w / 2;
+  const cy = h / 2;
+  const R = Math.min(w, h) / 2 - 4;
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 0.62, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  for (let i = 0; i < 72; i += 1) {
+    const a = ((i * 5 - heading) * Math.PI) / 180;
+    const major = i % 9 === 0;
+    const medium = i % 3 === 0;
+    const inner = R - (major ? 17 : medium ? 11 : 6);
+    const outer = R - 3;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.sin(a) * inner, cy - Math.cos(a) * inner);
+    ctx.lineTo(cx + Math.sin(a) * outer, cy - Math.cos(a) * outer);
+    ctx.strokeStyle = major ? "rgba(255,255,255,.9)" : medium ? "rgba(255,255,255,.45)" : "rgba(255,255,255,.22)";
+    ctx.lineWidth = major ? 2 : 1;
+    ctx.stroke();
+  }
+
+  const labels = [["N", 0], ["O", 90], ["S", 180], ["W", 270]];
+  labels.forEach(([label, base]) => {
+    const a = ((base - heading) * Math.PI) / 180;
+    const lr = R - 36;
+    ctx.fillStyle = label === "N" ? C.pink : "rgba(255,255,255,.7)";
+    ctx.font = "700 " + Math.max(11, R * 0.11) + "px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, cx + Math.sin(a) * lr, cy - Math.cos(a) * lr);
+  });
+
+  ctx.font = "600 " + Math.max(7, R * 0.07) + "px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,.3)";
+  for (let d = 0; d < 360; d += 30) {
+    const a = ((d - heading) * Math.PI) / 180;
+    const lr = R - 58;
+    ctx.fillText(String(d), cx + Math.sin(a) * lr, cy - Math.cos(a) * lr);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - R + 2);
+  ctx.lineTo(cx - 7, cy - R + 16);
+  ctx.lineTo(cx + 7, cy - R + 16);
+  ctx.closePath();
+  ctx.fillStyle = C.cyan;
+  ctx.fill();
+}
+
+function drawWave(canvas, values, color) {
+  const setup = setupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, w, h } = setup;
+  const step = w / values.length;
+  values.forEach((v, i) => {
+    const barHeight = Math.max(2, clamp(v, 0, 1) * h * 0.92);
+    const barWidth = Math.max(step * 0.52, 1);
+    const x = i * step + (step - barWidth) / 2;
+    const y = (h - barHeight) / 2;
+    const radius = Math.min(barWidth / 2, barHeight / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + barWidth, y, x + barWidth, y + barHeight, radius);
+    ctx.arcTo(x + barWidth, y + barHeight, x, y + barHeight, radius);
+    ctx.arcTo(x, y + barHeight, x, y, radius);
+    ctx.arcTo(x, y, x + barWidth, y, radius);
+    ctx.closePath();
+    ctx.fillStyle = rgba(color, 0.75);
+    ctx.fill();
+  });
+}
+
+/* ---------- Paint ---------- */
+function paintOverview(t) {
+  const att = attitude(t);
+  const accel = accelSeries(t);
+  const last = accel.map((arr) => arr[arr.length - 1]);
+
+  setText("ov-roll", fmt(deg(att.roll), 1) + "°");
+  setText("ov-pitch", fmt(deg(att.pitch), 1) + "°");
+  setText("ov-yaw", fmt(deg(att.yaw), 0) + "°");
+  setText("ov-g", fmt(Math.sqrt(att.gx * att.gx + att.gy * att.gy + att.gz * att.gz), 2) + " g");
+  drawHorizon($("horizon"), att);
+
+  setText("ov-ax", fmt(last[0], 2) + " g");
+  setText("ov-ay", fmt(last[1], 2) + " g");
+  setText("ov-az", fmt(last[2], 2) + " g");
+  drawChart($("chart-accel"), accel, [C.green, C.cyan, C.pink]);
+
+  const steps = 4820 + Math.floor(t * 2);
+  setGauge("steps-gauge", (steps % 10000) / 10000);
+  setText("steps-val", steps.toLocaleString("de-DE"));
+  setGauge("battery-gauge", 0.72);
+  setText("battery-val", "72 %");
+  const db = -46 + 8 * Math.sin(t * 0.5);
+  setGauge("sound-gauge", (db + 60) / 60);
+  setText("sound-val", Math.round(db) + " dB");
+
+  const speed = 4.9 + 0.3 * Math.sin(t * 0.3);
+  setText("ov-speed", fmt(speed, 1));
+  setText("ov-height", fmt(43.8 + 1.8 * Math.sin(t * 0.12), 1));
+  setText("ov-pressure", fmt(1013.2 + 1.4 * Math.sin(t * 0.12), 1));
+  setText("ov-sound", String(Math.round(db)));
+  const mag = Math.sqrt(Math.pow(19 + 5 * Math.sin(t * 0.7), 2) + Math.pow(-6 + 3 * Math.cos(t * 0.9), 2) + Math.pow(43 + 4 * Math.sin(t * 0.3), 2));
+  setText("ov-magnetic", fmt(mag, 0));
+  const rot = 0.55 * Math.sin(t * 1.4) + 0.42 * Math.cos(t * 1.1) + 0.30 * Math.sin(t * 0.8 + 0.6);
+  setText("ov-rotation", fmt(Math.abs(rot) * 57.3, 1));
+
+  const heading = (t * 6) % 360;
+  drawCompass($("compass-dash"), heading);
+  setText("ov-heading", Math.round(heading) + "°");
+  setText("ov-hacc", "± 6°");
+  setText("ov-lat", "52.52001°");
+  setText("ov-lon", "13.40495°");
+}
+
+function paintMotion(t) {
+  const att = attitude(t);
+  drawHorizon($("motion-horizon"), att);
+
+  if (state.mode === "attitude") {
+    setText("m-roll", fmt(deg(att.roll), 1));
+    setText("m-pitch", fmt(deg(att.pitch), 1));
+    setText("m-yaw", fmt(deg(att.yaw), 0));
+    setText("m-gravity", fmt(Math.sqrt(att.gx * att.gx + att.gy * att.gy + att.gz * att.gz), 2));
+    setText("m-gx", fmt(att.gx, 2));
+    setText("m-gy", fmt(att.gy, 2));
+    setText("m-gz", fmt(att.gz, 2));
+    const tilt = $("tilt-device");
+    if (tilt) tilt.style.transform = "rotateX(" + fmt(-deg(att.pitch), 1) + "deg) rotateZ(" + fmt(-deg(att.roll), 1) + "deg)";
+    return;
+  }
+
+  let series;
+  let colors;
+  let digits;
+  let unit;
+  if (state.mode === "rot") {
+    series = rotationSeries(t);
+    colors = [C.green, C.cyan, C.pink];
+    digits = 1;
+    unit = " °/s";
+  } else if (state.mode === "mag") {
+    series = magneticSeries(t);
+    colors = [C.green, C.cyan, C.pink];
+    digits = 1;
+    unit = " µT";
+  } else {
+    series = accelSeries(t);
+    colors = [C.green, C.cyan, C.pink];
+    digits = 3;
+    unit = " g";
+  }
+
+  drawChart($("chart-motion"), series, colors);
+
+  const current = series.map((arr) => arr[arr.length - 1]);
+  setText("m-x", fmt(current[0], digits) + unit);
+  setText("m-y", fmt(current[1], digits) + unit);
+  setText("m-z", fmt(current[2], digits) + unit);
+
+  const magnitude = Math.sqrt(current[0] * current[0] + current[1] * current[1] + current[2] * current[2]);
+  setText("m-mag", fmt(magnitude, digits));
+  let peak = 0;
+  for (let i = 0; i < series[0].length; i += 1) {
+    const m = Math.sqrt(series[0][i] ** 2 + series[1][i] ** 2 + series[2][i] ** 2);
+    if (m > peak) peak = m;
+  }
+  setText("m-peak", fmt(peak, digits));
+
+  ["x", "y", "z"].forEach((key, index) => {
+    const arr = series[index];
+    const min = Math.min.apply(null, arr);
+    const max = Math.max.apply(null, arr);
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+    setText("stat-" + key + "-avg", fmt(avg, digits));
+    setText("stat-" + key + "-min", fmt(min, digits));
+    setText("stat-" + key + "-max", fmt(max, digits));
+  });
+}
+
+function paintLocation(t) {
+  const heading = (t * 6) % 360;
+  drawCompass($("compass-big"), heading);
+  setText("loc-heading", Math.round(heading) + "°");
+  setText("loc-cardinal", cardinal(heading));
+  setText("loc-mag", Math.round(heading) + "°");
+  setText("loc-true", Math.round((heading + 2) % 360) + "°");
+  setText("loc-acc", "± 6°");
+  setText("loc-lat", "52.5200" + Math.round(8 + 4 * Math.sin(t * 0.1)) + "°");
+  setText("loc-lon", "13.4049" + Math.round(54 + 3 * Math.cos(t * 0.1)) + "°");
+  setText("loc-alt", fmt(43.8 + 1.8 * Math.sin(t * 0.12), 1) + " m");
+  setText("loc-accu", "± 4.5 m");
+  setText("loc-time", new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  setText("loc-speed", fmt(4.9 + 0.3 * Math.sin(t * 0.3), 1));
+  setText("loc-course", String(Math.round(heading)));
+  setText("loc-alt2", fmt(43.8 + 1.8 * Math.sin(t * 0.12), 1));
+}
+
+function paintActivity(t) {
+  const steps = 4820 + Math.floor(t * 2);
+  setGauge("act-gauge", (steps % 10000) / 10000);
+  setText("act-steps", steps.toLocaleString("de-DE"));
+  setText("act-dist", fmt((steps * 0.74) / 1000, 2) + " km");
+  setText("act-progress", Math.round(((steps % 10000) / 10000) * 100) + " %");
+  setText("act-cadence", String(Math.round(108 + 6 * Math.sin(t * 0.4))));
+  const pace = 0.68 + 0.03 * Math.sin(t * 0.3);
+  const km = pace * 1000;
+  setText("act-pace", Math.floor(km / 60) + ":" + String(Math.floor(km % 60)).padStart(2, "0"));
+  setText("act-distance", fmt((steps * 0.74) / 1000, 2));
+  setText("act-steps2", steps.toLocaleString("de-DE"));
+}
+
+function paintEnvironment(t) {
+  const alt = trace((s) => 1.8 * Math.sin(s * 0.12) + 0.35, t, 120, 0.5);
+  drawChart($("chart-alt"), [alt], [C.amber]);
+  const height = 1.8 * Math.sin(t * 0.12) + 0.35;
+  setText("env-alt", fmt(height, 2));
+  setText("env-pressure", fmt(1013.2 + 1.4 * Math.sin(t * 0.12), 1));
+  setText("env-gps", fmt(43.8 + height, 1) + " m");
+
+  const db = -46 + 8 * Math.sin(t * 0.5);
+  setText("env-db", String(Math.round(db)));
+  const fill = $("env-meter");
+  if (fill) fill.style.width = Math.round(clamp((db + 60) / 60, 0, 1) * 100) + "%";
+  setText("env-label", db < -55 ? "SEHR LEISE" : db < -40 ? "LEISE" : db < -25 ? "MODERAT" : db < -12 ? "LAUT" : "SEHR LAUT");
+
+  const bars = trace((s) => Math.abs(Math.sin(s * 3.1)) * 0.45 + Math.abs(Math.sin(s * 13.7)) * 0.18 + 0.12, t, 48, 0.06);
+  drawWave($("wave"), bars, C.pink);
+}
+
+function paintStudio(t) {
+  const level = Math.abs(0.9 * Math.sin(t * 0.7));
+  setText("st-level", fmt(level, 1));
+
+  const shake = 0.06 + Math.abs(0.18 * Math.sin(t * 2.6)) + Math.abs(0.05 * Math.sin(t * 9.1));
+  setText("st-shake", fmt(shake, 2));
+
+  const db = -46 + 8 * Math.sin(t * 0.5);
+  setText("st-noise", String(Math.round(db)));
+
+  const speed = 4.9 + 1.6 * Math.sin(t * 0.18);
+  setText("st-speed", fmt(speed, 1));
+
+  const steps = 4820 + Math.floor(t * 2);
+  setText("st-steps", steps.toLocaleString("de-DE"));
+
+  const height = 0.35 + 1.8 * Math.sin(t * 0.12);
+  setText("st-height", fmt(height, 2));
+}
+
+function paint(t) {
+  if (state.tab === "overview") paintOverview(t);
+  else if (state.tab === "motion") paintMotion(t);
+  else if (state.tab === "location") paintLocation(t);
+  else if (state.tab === "activity") paintActivity(t);
+  else if (state.tab === "environment") paintEnvironment(t);
+  else if (state.tab === "studio") paintStudio(t);
+}
+
+/* ---------- Chrome ---------- */
+const TABS = [
+  { id: "overview", label: "Übersicht", icon: "grid" },
+  { id: "studio", label: "Studio", icon: "hammer" },
+  { id: "motion", label: "Bewegung", icon: "gyro" },
+  { id: "location", label: "Standort", icon: "pin" },
+  { id: "activity", label: "Aktivität", icon: "walk" },
+  { id: "environment", label: "Umgebung", icon: "gauge" }
+];
+
+function renderTabs() {
+  $("tabs").innerHTML = TABS.map((tab) =>
+    '<button class="tab ' + (state.tab === tab.id ? "active" : "") + '" data-tab="' + tab.id + '">' +
+    icon(tab.icon) + '<span>' + tab.label + '</span></button>').join("");
+}
+
+function renderSheet() {
+  const sensors = [
+    ["Accelerometer", true], ["Gyroskop", true], ["Magnetometer", true], ["Device Motion", true],
+    ["Kompass", true], ["Schrittzähler", true], ["Etagen &amp; Pace", true], ["Barometer", true]
+  ];
+  $("sheet").innerHTML =
+    '<div class="sheet-panel">' +
+      '<div class="sheet-head"><div><div class="sheet-eyebrow">SENSOR LAB</div><h3>Einstellungen</h3></div>' +
+      '<button class="iconbtn" id="sheet-close" aria-label="Schließen">' + icon("x") + '</button></div>' +
+      '<div class="sheet-card"><div class="sheet-title">Demo-Modus</div>' +
+        '<div class="switch-row"><div><div class="sw-title">Simulierte Sensordaten</div>' +
+        '<div class="sw-sub">Beispielwerte für alle Sensoren</div></div><div class="switch on"><span></span></div></div></div>' +
+      '<div class="sheet-card"><div class="sheet-title">Sensoren</div>' +
+        sensors.map(([name, on]) => '<div class="sheet-row ' + (on ? "" : "off") + '">' + icon("check") + name + '<em>' + (on ? "aktiv" : "n/a") + '</em></div>').join("") +
+      '</div>' +
+      '<div class="sheet-card"><div class="sheet-title">Berechtigungen</div>' +
+        '<div class="sheet-row">' + icon("check") + 'Standort<em>Bei Verwendung</em></div>' +
+        '<div class="sheet-row">' + icon("check") + 'Mikrofon<em>Aktiv</em></div>' +
+        '<div class="sheet-row">' + icon("check") + 'Bewegung<em>Aktiv</em></div>' +
+      '</div>' +
+      '<p class="sheet-note">In der nativen App stehen hier zusätzlich Berechtigungsstatus, Geräteinfos und der Live-Umschalter für den Demo-Modus.</p>' +
+    '</div>';
+}
+
+function syncLive() {
+  document.querySelectorAll(".live").forEach((el) => {
+    el.classList.toggle("paused", state.paused);
+    const label = el.querySelector("span");
+    if (label) label.textContent = state.paused ? "PAUSE" : "LIVE";
+  });
+  const button = $("pause-btn");
+  if (button) button.innerHTML = icon(state.paused ? "play" : "pause");
+}
+
+function render() {
+  $("screen").innerHTML = VIEWS[state.tab]();
+  $("screen").scrollTop = 0;
+  renderTabs();
+  syncLive();
+  paint(clock);
+}
+
+/* ---------- Interaktion ---------- */
+document.addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-tab]");
+  if (tab) {
+    state.tab = tab.dataset.tab;
+    render();
+    return;
+  }
+
+  const mode = event.target.closest("[data-mode]");
+  if (mode) {
+    state.mode = mode.dataset.mode;
+    render();
+    return;
+  }
+
+  if (event.target.closest("#pause-btn")) {
+    state.paused = !state.paused;
+    syncLive();
+    return;
+  }
+
+  if (event.target.closest("#settings-btn")) {
+    $("sheet").classList.add("open");
+    return;
+  }
+
+  if (event.target.closest("#sheet-close") || event.target === $("sheet")) {
+    $("sheet").classList.remove("open");
+    return;
+  }
+
+  if (event.target.closest("#prox")) {
+    event.target.closest("#prox").classList.toggle("on");
+  }
+});
+
+/* ---------- Start ---------- */
+renderSheet();
+
+let clock = 0;
+let last = performance.now();
+
+render();
+
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (!state.paused) clock += dt;
+  paint(clock);
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
